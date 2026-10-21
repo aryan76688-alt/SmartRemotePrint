@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Marg Cloud</string>
+    <string name="print_service_label">Office Brother Remote Print</string>
+    <string name="print_service_settings">Configure Office Print Agent</string>
+</resources>

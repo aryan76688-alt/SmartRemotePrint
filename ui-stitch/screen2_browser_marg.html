@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Remote Print - Marg Cloud Browser & Esc Support</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  body { font-family: 'Geist', sans-serif; background-color: #090d16; color: #dfe2ef; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .surface-1 { background-color: #0f172a; border: 1px solid #1e293b; }
+  .surface-2 { background-color: #181e2b; border: 1px solid #273043; }
+  .accent-indigo { background-color: #6366f1; }
+  .text-indigo { color: #818cf8; }
+</style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+  <header class="h-14 border-b border-slate-800 bg-[#0b0f19] px-6 flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-sm font-semibold tracking-wide">SMART REMOTE PRINT</span>
+        <span class="text-xs bg-slate-800 text-indigo-400 px-2 py-0.5 rounded mono">TAB P12</span>
+      </div>
+      <div class="h-4 w-px bg-slate-800"></div>
+      <div class="text-xs text-slate-400 mono">Tailscale: <span class="text-emerald-400">desktop-00ctdtl.tailfc14cd.ts.net (100.111.100.122:8766)</span> [12ms]</div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded mono">Brother DCP-T530DW (USB001): READY</span>
+      <div class="text-xs text-slate-400">Lenovo Keyboard: <span class="text-indigo-400 mono">ESC Active</span></div>
+    </div>
+  </header>
+  <div class="flex-1 flex overflow-hidden">
+    <aside class="w-56 border-r border-slate-800 bg-[#0a0e17] flex flex-col justify-between p-3">
+      <nav class="space-y-1">
+        <a href="screen1_welcome_pairing.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">01. Pairing & Mesh</a>
+        <a href="screen2_browser_marg.html" class="flex items-center px-3 py-2 text-xs rounded bg-indigo-600 text-white">02. Marg Cloud Browser</a>
+        <a href="screen3_tabs_addressbar.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">03. Tabs & URL Bar</a>
+        <a href="screen4_printer_selection.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">04. Printer Selection</a>
+        <a href="screen5_print_preview.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">05. Print Preview</a>
+        <a href="screen6_print_queue.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">06. Spooler Queue</a>
+        <a href="screen7_windows_status.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">07. Windows Node Status</a>
+        <a href="screen8_credential_settings.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">08. Keystore & Security</a>
+        <a href="screen9_keyboard_esc.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">09. Lenovo Esc Mapping</a>
+        <a href="screen10_diagnostics.html" class="flex items-center px-3 py-2 text-xs rounded text-slate-400 hover:bg-slate-800">10. Diagnostics & Self-Test</a>
+      </nav>
+      <div class="p-2 border-t border-slate-800 text-[11px] text-slate-500 mono">
+        Agent Build 1.0.0<br>Zero-Trust Tailnet
+      </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto p-6 bg-[#090d16]">
+      
+        <div class="flex flex-col h-full space-y-4">
+          <div class="surface-1 p-3 rounded-lg flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <button class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs">◀</button>
+              <button class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs">▶</button>
+              <button class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs">⟳</button>
+              <span class="text-xs text-emerald-400 ml-2">🔒</span>
+              <input type="text" readonly value="https://account.margcloud.com/login" class="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-xs w-96 mono text-slate-200">
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="text-xs bg-indigo-950 text-indigo-400 border border-indigo-700 px-2 py-0.5 rounded mono">LENOVO BACK = ESCAPE</span>
+              <button class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-1.5 rounded text-xs flex items-center space-x-1">
+                <span>🖨️ Direct Print Bill</span>
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 surface-2 rounded-lg p-6 flex flex-col justify-center items-center border border-dashed border-slate-700">
+            <div class="max-w-md w-full bg-slate-900 border border-slate-700 rounded-xl p-8 shadow-2xl text-center space-y-4">
+              <div class="w-16 h-16 bg-red-600 rounded-full mx-auto flex items-center justify-center text-white text-3xl font-bold italic">M</div>
+              <h2 class="text-xl font-bold text-white">Marg Cloud ERP</h2>
+              <p class="text-xs text-slate-400">Enterprise Accounting & Billing. Isolated Web Container with Windows Escape Key Remapping.</p>
+              <div class="space-y-3 text-left">
+                <div>
+                  <label class="text-[11px] text-slate-400">Company ID / User ID</label>
+                  <input type="text" placeholder="Enter Company ID" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white">
+                </div>
+                <div>
+                  <label class="text-[11px] text-slate-400">Password</label>
+                  <input type="password" placeholder="••••••••••••" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white">
+                </div>
+              </div>
+              <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded text-xs">Sign In to Marg Cloud</button>
+              <div class="text-[11px] text-slate-500 mono">Auto-mapped hardware Esc key for rapid ledger exit</div>
+            </div>
+          </div>
+        </div>
+        
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Smart Remote Print - Printer Selection &amp; Queue Manager</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Geist & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container": "#1c1f29",
+            "surface": "#0f131c",
+            "secondary-container": "#00a6e0",
+            "inverse-surface": "#dfe2ef",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "on-primary": "#1000a9",
+            "surface-bright": "#353943",
+            "on-surface-variant": "#c7c4d7",
+            "outline": "#908fa0",
+            "on-surface": "#dfe2ef",
+            "on-secondary-fixed": "#001e2c",
+            "on-primary-container": "#0d0096",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#c0c1ff",
+            "surface-dim": "#0f131c",
+            "on-secondary-fixed-variant": "#004c69",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#c4e7ff",
+            "on-primary-fixed": "#07006c",
+            "inverse-primary": "#494bd6",
+            "secondary": "#7bd0ff",
+            "on-background": "#dfe2ef",
+            "surface-container-low": "#181b25",
+            "on-secondary-container": "#00374d",
+            "surface-container-high": "#262a34",
+            "on-tertiary": "#003824",
+            "error": "#ffb4ab",
+            "tertiary-container": "#00885d",
+            "error-container": "#93000a",
+            "secondary-fixed-dim": "#7bd0ff",
+            "primary-fixed": "#e1e0ff",
+            "surface-variant": "#31353f",
+            "outline-variant": "#464554",
+            "inverse-on-surface": "#2c303a",
+            "surface-tint": "#c0c1ff",
+            "on-tertiary-container": "#000703",
+            "on-error-container": "#ffdad6",
+            "background": "#0f131c",
+            "on-secondary": "#00354a",
+            "on-error": "#690005",
+            "surface-container-highest": "#31353f",
+            "primary": "#c0c1ff",
+            "primary-container": "#8083ff",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-container-lowest": "#0a0e17"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-md": "0.75rem",
+            "margin": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-lg": "1.25rem"
+          },
+          "fontFamily": {
+            "label-sm": ["JetBrains Mono"],
+            "headline-xl": ["Geist"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Geist"],
+            "body-lg": ["Geist"],
+            "body-sm": ["Geist"],
+            "code-display": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "headline-md": ["Geist"],
+            "headline-lg": ["Geist"],
+            "label-lg": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.05em", "fontWeight": "400" }],
+            "headline-xl": ["2rem", { "lineHeight": "2.5rem", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-sm": ["1.125rem", { "lineHeight": "1.5rem", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-lg": ["1rem", { "lineHeight": "1.5rem", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-sm": ["0.75rem", { "lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "code-display": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "0.15em", "fontWeight": "700" }],
+            "body-md": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.015em", "fontWeight": "500" }],
+            "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom scanline / precise terminal subtle grid */
+    .telemetry-grid {
+      background-image: linear-gradient(to right, rgba(70, 69, 84, 0.08) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(70, 69, 84, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e17;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #31353f;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen overflow-x-hidden telemetry-grid selection:bg-primary-container selection:text-on-primary">
+<!-- ========================================================================= -->
+<!-- SHARED COMPONENT: SideNavBar                                             -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-64 flex flex-col bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant dark:border-outline-variant z-40 select-none">
+<div class="h-full flex flex-col justify-between p-space-md">
+<!-- Top Group: Brand + Workspace Info + Nav Links -->
+<div class="flex flex-col gap-space-md">
+<!-- Brand Header Identity -->
+<div class="flex items-center gap-space-sm px-space-sm py-space-xs border-b border-outline-variant/40 pb-space-md">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="hub">hub</span>
+</div>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm font-semibold text-primary dark:text-primary tracking-tight">PrintGrid Engine</div>
+<div class="text-label-sm font-label-sm text-outline flex items-center gap-1">
+<span>v4.2.1-ent</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+</div>
+</div>
+</div>
+<!-- Node Scope Identifier Badge -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-lg p-space-sm">
+<div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Authenticated Identity</div>
+<div class="flex items-center gap-2 mt-1">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-label-md font-label-md text-on-surface truncate">admin@desktop-00ctdtl</span>
+</div>
+</div>
+<!-- Primary Navigation Cluster -->
+<!-- Active Intent Mapping: Page is "Printer Selection & Queue Manager" -> "Print Queue" Active -->
+<nav class="flex flex-col gap-1 mt-1">
+<!-- Overview -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="dashboard">dashboard</span>
+<span class="text-label-md font-label-md">Overview</span>
+</a>
+<!-- Print Queue (ACTIVE) -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm bg-surface-container-high dark:bg-surface-container-high text-primary dark:text-primary rounded-lg border-l-2 border-primary hover:bg-surface-container dark:hover:bg-surface-container transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="print" style="font-variation-settings: 'FILL' 1;">print</span>
+<span class="text-label-md font-label-md font-medium">Print Queue</span>
+<span class="ml-auto text-[10px] font-label-sm px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary border border-secondary/30">0 spool</span>
+</a>
+<!-- Discovered Nodes -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="radar">radar</span>
+<span class="text-label-md font-label-md">Discovered Nodes</span>
+</a>
+<!-- Mesh Network -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="hub">hub</span>
+<span class="text-label-md font-label-md">Mesh Network</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+<!-- Diagnostics -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99] duration-100 ease-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+<span class="text-label-md font-label-md">Diagnostics</span>
+</a>
+</nav>
+<!-- CTA Action in Sidebar -->
+<button class="mt-2 w-full flex items-center justify-center gap-2 px-space-md py-space-sm bg-surface-container-high border border-outline-variant/70 hover:border-primary text-primary hover:text-on-surface rounded-lg text-label-md font-label-md transition-colors active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="add_link">add_link</span>
+<span>Pair Peer</span>
+</button>
+</div>
+<!-- Bottom / Footer Nav Cluster -->
+<div class="flex flex-col gap-1 border-t border-outline-variant/40 pt-space-md">
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="menu_book">menu_book</span>
+<span class="text-label-md font-label-md">Documentation</span>
+</a>
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+<span class="text-label-md font-label-md">Lock Session</span>
+</a>
+<!-- Tablet Hardware Telemetry Status -->
+<div class="mt-2 px-space-sm py-2 bg-surface-container-lowest/80 rounded border border-outline-variant/40 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] font-label-sm text-outline">DISPLAY CANVAS</span>
+<span class="text-label-sm font-label-sm text-on-surface">Lenovo P12 3K (5:3)</span>
+</div>
+<span class="text-label-sm font-label-sm text-tertiary">100% OK</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- SHARED COMPONENT: TopNavBar (Telemetry Header)                           -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 right-0 left-64 h-14 bg-surface-container-lowest dark:bg-surface-container-lowest border-b border-outline-variant dark:border-outline-variant z-30 select-none">
+<div class="flex justify-between items-center px-space-lg h-full w-full">
+<!-- Left: Node Breadcrumb & Product Identity -->
+<div class="flex items-center gap-space-md">
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-on-surface tracking-tight flex items-center gap-2">
+<span>PrintGrid Orchestrator</span>
+</div>
+<span class="text-outline-variant">|</span>
+<!-- Precise Node Breadcrumb -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-low border border-outline-variant/60 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="router">router</span>
+<span class="text-primary font-medium">LENOVO P12-NODE (DIRECT 3K)</span>
+<span class="text-outline">//</span>
+<span class="text-secondary truncate max-w-[210px]">desktop-00ctdtl.tailfc14cd.ts.net</span>
+<span class="text-outline">&gt;</span>
+<span class="text-on-surface font-semibold">Brother DCP-T530DW</span>
+</div>
+</div>
+<!-- Right: Mesh Status & Trailing Actions -->
+<div class="flex items-center gap-space-md">
+<!-- Tailscale Mesh Status Pill -->
+<div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-container-high border border-outline-variant/80">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="text-label-sm font-label-sm text-on-surface">Tailscale Mesh:</span>
+<span class="text-label-sm font-label-sm text-tertiary font-medium">14ms Direct (mTLS)</span>
+</div>
+<!-- Diagnostic Icons -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-1.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Battery Status: AC Connected">
+<span class="material-symbols-outlined text-[18px]" data-icon="battery_charging_full">battery_charging_full</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Wi-Fi 6 Mesh Link 1.2 Gbps">
+<span class="material-symbols-outlined text-[18px]" data-icon="wifi">wifi</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container-high text-tertiary hover:text-tertiary transition-colors" title="mTLS Cryptographic Shield Active">
+<span class="material-symbols-outlined text-[18px]" data-icon="security">security</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<!-- Quick Action Triggers -->
+<button class="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-container-high border border-outline-variant hover:border-secondary text-secondary rounded text-label-sm font-label-sm transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+<span>Sync Telemetry</span>
+</button>
+<button class="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-container-low border border-outline-variant hover:border-error text-error rounded text-label-sm font-label-sm transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="emergency_home">emergency_home</span>
+<span>Emergency Stop</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN CANVAS (16-Column Master Grid Widescreen Tablet Canvas)               -->
+<!-- ========================================================================= -->
+<main class="ml-64 pt-14 p-space-lg min-h-screen">
+<!-- TOP TELEMETRY TRACKER / STEPPER BAR -->
+<div class="mb-space-md bg-surface-container-low border border-outline-variant rounded-lg p-space-sm flex items-center justify-between text-label-sm font-label-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-tertiary font-medium">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary flex items-center justify-center text-[10px]">01</span>
+<span>DISCOVERY</span>
+</div>
+<div class="w-8 h-[1px] bg-primary"></div>
+<div class="flex items-center gap-2 text-tertiary font-medium">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary flex items-center justify-center text-[10px]">02</span>
+<span>MAGICDNS PROVISION</span>
+</div>
+<div class="w-8 h-[1px] bg-primary"></div>
+<div class="flex items-center gap-2 text-primary font-medium">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-primary flex items-center justify-center text-[10px]">03</span>
+<span>CIPHER VERIFICATION</span>
+</div>
+<div class="w-8 h-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-2 text-outline">
+<span class="w-5 h-5 rounded-full bg-surface-container-lowest border border-outline-variant flex items-center justify-center text-[10px]">04</span>
+<span>READY / ACTIVE QUEUE</span>
+</div>
+</div>
+<!-- Live Quick Status Action -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/60">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface">Queue Status: 0 Pending Jobs</span>
+</div>
+<button class="flex items-center gap-1 text-secondary hover:text-primary transition-colors text-label-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="refresh">refresh</span>
+<span>Re-query Spooler</span>
+</button>
+</div>
+</div>
+<!-- 16-COLUMN MASTER WORKSPACE -->
+<div class="grid grid-cols-16 gap-space-md">
+<!-- ===================================================================== -->
+<!-- LEFT WORKSPACE: 6 COLUMNS - Target Workstation Context & Dual Queue  -->
+<!-- ===================================================================== -->
+<div class="col-span-16 lg:col-span-6 flex flex-col gap-space-md">
+<!-- 1. HEADER CARD / TARGET WORKSTATION CONTEXT -->
+<section class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md relative overflow-hidden">
+<!-- Ambient Glow Keyline -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-80"></div>
+<div class="flex justify-between items-start mb-space-sm">
+<div>
+<span class="text-[10px] font-label-sm text-outline uppercase tracking-wider block">Target Host Orchestrator</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface mt-0.5">
+                Office Windows 11 Pro Enterprise Host
+              </h2>
+<span class="text-label-sm font-label-sm text-secondary">desktop-00ctdtl (100.92.14.88)</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-high border border-outline-variant text-[11px] font-label-sm text-on-surface">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Online (21d uptime)</span>
+</div>
+</div>
+<!-- Printer Meta Block -->
+<div class="mt-space-sm p-space-sm bg-surface-container-lowest border border-outline-variant/80 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]" data-icon="print">print</span>
+</div>
+<div>
+<div class="text-body-md font-body-md font-medium text-on-surface">Brother DCP-T530DW</div>
+<div class="text-label-sm font-label-sm text-outline">All-in-One Ink Tank System</div>
+</div>
+</div>
+<div class="text-right">
+<div class="text-label-sm font-label-sm text-secondary">SN: E82910J4H291</div>
+<div class="text-[10px] font-label-sm text-outline">Firmware: v2.14 / Engine 1.09</div>
+</div>
+</div>
+<!-- Hardware Driver Verification Badge -->
+<div class="mt-space-sm p-space-sm bg-surface-container/60 border border-outline-variant/50 rounded flex items-start gap-2.5">
+<span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<div class="flex flex-col">
+<div class="text-label-sm font-label-sm font-medium text-on-surface flex items-center gap-1.5">
+<span>Brother Br-Script3 / PCL6 Driver v1.08.02</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container text-on-tertiary font-label-sm text-[9px] rounded font-semibold">WHQL CERTIFIED</span>
+</div>
+<div class="text-[11px] font-body-sm text-outline mt-0.5">
+                64-bit Spooler Subsystem Validated. Cryptographic isolation active on winspool.drv.
+              </div>
+</div>
+</div>
+</section>
+<!-- 2. DUAL QUEUE SWITCHER / SELECTOR (CORE REQUIREMENT) -->
+<section class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md">
+<div class="flex items-center justify-between mb-space-sm">
+<div>
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface block">Dual Spool Queue Router</span>
+<span class="text-label-sm font-label-sm text-outline">Select remote forwarding route on host machine</span>
+</div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-on-surface-variant">
+              Active Routing
+            </span>
+</div>
+<div class="flex flex-col gap-space-sm mt-space-sm" id="queue-container">
+<!-- QUEUE A: HOST USB DIRECT SPOOL (ACTIVE / RECOMMENDED) -->
+<label class="relative block p-space-md rounded-lg border-2 border-primary bg-surface-container-high cursor-pointer transition-all select-none group shadow-[inset_0_0_0_1px_rgba(192,193,255,0.2)]">
+<input checked="" class="sr-only peer" name="printer_queue" type="radio" value="usb001"/>
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-space-sm">
+<div class="mt-0.5 w-4 h-4 rounded-full border-2 border-primary flex items-center justify-center peer-checked:border-primary">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm font-semibold text-on-surface text-body-lg">Queue A: Host USB Direct Spool</span>
+<span class="px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/40 font-label-sm text-[10px] font-bold">
+                        RECOMMENDED
+                      </span>
+</div>
+<div class="text-label-sm font-label-sm text-secondary mt-0.5">Port: USB001 // Virtual Printer Port Architecture</div>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-tertiary/10 border border-tertiary/30 text-tertiary text-label-sm font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span>ONLINE / READY</span>
+</div>
+</div>
+<!-- Queue Telemetry Spec -->
+<div class="mt-space-md grid grid-cols-3 gap-2 p-space-sm bg-surface-container-lowest rounded border border-outline-variant/60 text-label-sm font-label-sm">
+<div>
+<span class="text-outline text-[10px] block">TRANSIT LATENCY</span>
+<span class="text-tertiary font-semibold">0.8ms (Ultra Low)</span>
+</div>
+<div>
+<span class="text-outline text-[10px] block">SPOOL PROTOCOL</span>
+<span class="text-on-surface">RAW 100% PCL6</span>
+</div>
+<div>
+<span class="text-outline text-[10px] block">FAILOVER BUFFER</span>
+<span class="text-on-surface">512 MB NVMe</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+                  Active Primary Routing Queue for Remote Jobs
+                </span>
+<span class="text-outline text-[11px]">Hardware ID: USB\VID_04F9&amp;PID_0449</span>
+</div>
+</label>
+<!-- QUEUE B: SUBNET NETWORK PORT (STANDBY) -->
+<label class="relative block p-space-md rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container hover:border-outline cursor-pointer transition-all select-none group">
+<input class="sr-only peer" name="printer_queue" type="radio" value="wsd_net"/>
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-space-sm">
+<div class="mt-0.5 w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-transparent"></div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm font-semibold text-on-surface-variant text-body-lg">Queue B: Subnet Network Port</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high text-outline border border-outline-variant font-label-sm text-[10px]">
+                        SECONDARY
+                      </span>
+</div>
+<div class="text-label-sm font-label-sm text-outline mt-0.5">WSD / TCP/IP Socket: 192.168.1.142:9100</div>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-outline text-label-sm font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span>STANDBY</span>
+</div>
+</div>
+<!-- Queue Telemetry Spec -->
+<div class="mt-space-md grid grid-cols-3 gap-2 p-space-sm bg-surface-container-lowest/80 rounded border border-outline-variant/40 text-label-sm font-label-sm">
+<div>
+<span class="text-outline text-[10px] block">NETWORK PING</span>
+<span class="text-on-surface">4.1ms (LAN)</span>
+</div>
+<div>
+<span class="text-outline text-[10px] block">SNMP STATUS</span>
+<span class="text-tertiary">Reachable (v2c)</span>
+</div>
+<div>
+<span class="text-outline text-[10px] block">PORT ENCRYPTION</span>
+<span class="text-outline">Unencrypted Raw</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span>Backup destination if USB subsystem disconnects</span>
+<span class="text-[11px]">MAC: 3C:2A:F4:91:02:C8</span>
+</div>
+</label>
+</div>
+<!-- Quick Queue Helper Banner -->
+<div class="mt-space-md p-space-sm rounded bg-surface-container-lowest border border-outline-variant/60 flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="info">info</span>
+              Host spool queue priority set to: <span class="text-primary font-medium">REALTIME_CRITICAL</span>
+</span>
+<button class="text-secondary hover:underline">Change Priority</button>
+</div>
+</section>
+</div>
+<!-- ===================================================================== -->
+<!-- RIGHT WORKSPACE: 10 COLUMNS - Telemetry, Consumables & Diagnostics    -->
+<!-- ===================================================================== -->
+<div class="col-span-16 lg:col-span-10 flex flex-col gap-space-md">
+<!-- 3. LIVE TELEMETRY & CONSUMABLES DASHBOARD -->
+<section class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md">
+<!-- Ready State Status Banner -->
+<div class="p-space-sm bg-surface-container-lowest border-l-4 border-tertiary rounded flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px]" data-icon="heat_pump">heat_pump</span>
+<div class="font-label-md text-label-md">
+<span class="text-tertiary font-semibold">Engine: Ready for Spooling</span>
+<span class="text-outline mx-2">//</span>
+<span class="text-on-surface">Head Temperature: <span class="text-secondary font-medium">Optimal (24°C)</span></span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-label-sm font-label-sm">
+<span class="text-outline">Voltage: <span class="text-on-surface">230V / Stable</span></span>
+<span class="text-outline">Duty: <span class="text-on-surface">1,240 pgs/mo</span></span>
+</div>
+</div>
+<!-- Section Headline -->
+<div class="mt-space-md mb-space-sm flex items-center justify-between">
+<h3 class="text-headline-sm font-headline-sm font-semibold text-on-surface flex items-center gap-2">
+<span>Real-Time Consumables &amp; Reservoir Telemetry</span>
+<span class="text-label-sm font-label-sm text-outline font-normal">(Brother BT5000 / BTD60 Tank System)</span>
+</h3>
+<span class="text-label-sm font-label-sm text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+              Sensors Live
+            </span>
+</div>
+<!-- 4-Tank Ink Level Gauges Grid -->
+<div class="grid grid-cols-4 gap-space-sm">
+<!-- Tank 1: Black BTD60BK -->
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-space-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-semibold text-on-surface">BLACK (BK)</span>
+<span class="text-on-surface font-label-md font-bold">88%</span>
+</div>
+<div class="text-[10px] font-label-sm text-outline mt-0.5">BTD60BK // Pigment</div>
+</div>
+<!-- Crisp Gauge Bar -->
+<div class="my-space-sm">
+<div class="w-full h-8 bg-surface-container-lowest rounded border border-outline-variant/80 p-0.5 relative overflow-hidden flex flex-col justify-end">
+<div class="w-full bg-gradient-to-t from-zinc-700 to-zinc-400 rounded-sm transition-all duration-500" style="height: 88%;"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none text-[11px] font-label-sm font-semibold text-white drop-shadow">
+                    88%
+                  </div>
+</div>
+</div>
+<div class="text-[10px] font-label-sm text-outline flex justify-between">
+<span>Cap: 108ml</span>
+<span class="text-on-surface">~5,720 pgs</span>
+</div>
+</div>
+<!-- Tank 2: Cyan BT5000C -->
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-space-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-semibold text-secondary">CYAN (C)</span>
+<span class="text-secondary font-label-md font-bold">74%</span>
+</div>
+<div class="text-[10px] font-label-sm text-outline mt-0.5">BT5000C // Dye</div>
+</div>
+<!-- Crisp Gauge Bar -->
+<div class="my-space-sm">
+<div class="w-full h-8 bg-surface-container-lowest rounded border border-outline-variant/80 p-0.5 relative overflow-hidden flex flex-col justify-end">
+<div class="w-full bg-gradient-to-t from-sky-600 to-cyan-400 rounded-sm transition-all duration-500" style="height: 74%;"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none text-[11px] font-label-sm font-semibold text-white drop-shadow">
+                    74%
+                  </div>
+</div>
+</div>
+<div class="text-[10px] font-label-sm text-outline flex justify-between">
+<span>Cap: 48ml</span>
+<span class="text-on-surface">~3,700 pgs</span>
+</div>
+</div>
+<!-- Tank 3: Magenta BT5000M -->
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-space-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-semibold text-rose-300">MAGENTA (M)</span>
+<span class="text-rose-300 font-label-md font-bold">91%</span>
+</div>
+<div class="text-[10px] font-label-sm text-outline mt-0.5">BT5000M // Dye</div>
+</div>
+<!-- Crisp Gauge Bar -->
+<div class="my-space-sm">
+<div class="w-full h-8 bg-surface-container-lowest rounded border border-outline-variant/80 p-0.5 relative overflow-hidden flex flex-col justify-end">
+<div class="w-full bg-gradient-to-t from-pink-700 to-rose-400 rounded-sm transition-all duration-500" style="height: 91%;"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none text-[11px] font-label-sm font-semibold text-white drop-shadow">
+                    91%
+                  </div>
+</div>
+</div>
+<div class="text-[10px] font-label-sm text-outline flex justify-between">
+<span>Cap: 48ml</span>
+<span class="text-on-surface">~4,550 pgs</span>
+</div>
+</div>
+<!-- Tank 4: Yellow BT5000Y -->
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-space-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-semibold text-amber-300">YELLOW (Y)</span>
+<span class="text-amber-300 font-label-md font-bold">62%</span>
+</div>
+<div class="text-[10px] font-label-sm text-outline mt-0.5">BT5000Y // Dye</div>
+</div>
+<!-- Crisp Gauge Bar -->
+<div class="my-space-sm">
+<div class="w-full h-8 bg-surface-container-lowest rounded border border-outline-variant/80 p-0.5 relative overflow-hidden flex flex-col justify-end">
+<div class="w-full bg-gradient-to-t from-amber-600 to-yellow-300 rounded-sm transition-all duration-500" style="height: 62%;"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none text-[11px] font-label-sm font-semibold text-white drop-shadow">
+                    62%
+                  </div>
+</div>
+</div>
+<div class="text-[10px] font-label-sm text-outline flex justify-between">
+<span>Cap: 48ml</span>
+<span class="text-on-surface">~3,100 pgs</span>
+</div>
+</div>
+</div>
+<!-- Media & Paper Tray Sensor Module -->
+<div class="mt-space-md grid grid-cols-2 gap-space-sm">
+<!-- Standard Tray 1 -->
+<div class="p-space-sm bg-surface-container-high rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-container-lowest border border-outline-variant flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="layers">layers</span>
+</div>
+<div>
+<div class="text-label-md font-label-md font-medium text-on-surface">Standard Tray 1: Plain A4 (80g/m²)</div>
+<div class="text-label-sm font-label-sm text-outline">180 / 250 sheets remaining (72% full)</div>
+</div>
+</div>
+<div class="w-20">
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden border border-outline-variant/60">
+<div class="bg-primary h-full rounded-full" style="width: 72%;"></div>
+</div>
+<span class="text-[10px] font-label-sm text-outline text-right block mt-0.5">72% LOADED</span>
+</div>
+</div>
+<!-- Manual Feed Slot -->
+<div class="p-space-sm bg-surface-container-high rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-container-lowest border border-outline-variant flex items-center justify-center text-outline">
+<span class="material-symbols-outlined text-[18px]" data-icon="input">input</span>
+</div>
+<div>
+<div class="text-label-md font-label-md font-medium text-on-surface">Manual Feed Slot</div>
+<div class="text-label-sm font-label-sm text-tertiary">Ready (Empty / Standby)</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-lowest text-outline border border-outline-variant font-label-sm text-[10px]">
+                SINGLE SHEET
+              </span>
+</div>
+</div>
+</section>
+<!-- 4. ACTION TOOLBAR & SPOOL DIAGNOSTICS -->
+<section class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md">
+<div class="flex items-center justify-between mb-space-sm">
+<div>
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface block">Spool Diagnostics &amp; Direct Actions</span>
+<span class="text-label-sm font-label-sm text-outline">Sub-millisecond driver commands to target host</span>
+</div>
+<!-- Target Queue Badge Confirmation -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/10 border border-primary/30 text-label-sm font-label-sm text-primary">
+<span class="material-symbols-outlined text-[14px]" data-icon="cable">cable</span>
+<span>Target: Host USB001 Direct</span>
+</div>
+</div>
+<!-- Operational Buttons Deck -->
+<div class="flex flex-wrap items-center gap-space-sm mt-space-sm">
+<!-- Primary Action Button -->
+<button class="flex items-center gap-2 px-space-lg py-2.5 bg-primary-container text-on-primary hover:bg-primary font-headline-sm font-semibold text-body-md rounded shadow-md transition-all active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+<span>Trigger Remote Test Print</span>
+</button>
+<!-- Secondary Actions -->
+<button class="flex items-center gap-1.5 px-space-md py-2.5 bg-surface-container-high border border-outline-variant hover:border-outline text-on-surface rounded text-label-md font-label-md transition-all active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="tune">tune</span>
+<span>Run Head Alignment Check</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-2.5 bg-surface-container-high border border-outline-variant hover:border-error text-error rounded text-label-md font-label-md transition-all active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete_sweep">delete_sweep</span>
+<span>Purge Stuck Spooler Jobs</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-2.5 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface-variant hover:text-on-surface rounded text-label-md font-label-md transition-all active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="settings_suggest">settings_suggest</span>
+<span>Driver Properties &amp; PostScript Emulation</span>
+</button>
+</div>
+<div class="text-[11px] font-label-sm text-outline mt-2">
+            * Triggering remote test print compiles a 1-page PCL6 diagnostic raster transmitted through the encrypted Tailscale tunnel directly to win32spl.dll on host.
+          </div>
+<!-- RECENT SPOOL EVENT LOG SNIPPET (TERMINAL STYLE) -->
+<div class="mt-space-md bg-surface-container-lowest border border-outline-variant/80 rounded-lg p-space-sm font-label-sm text-label-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/50 pb-1.5 mb-2 text-outline">
+<span class="flex items-center gap-1.5 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="terminal">terminal</span>
+                Live Event Attestation &amp; Cryptographic Telemetry Log
+              </span>
+<span class="text-[10px] text-outline font-label-sm">LOG TAIL: /var/log/spool_tailscale.log</span>
+</div>
+<div class="flex flex-col gap-1.5 text-[11px] leading-relaxed custom-scrollbar max-h-36 overflow-y-auto font-label-sm">
+<div class="flex items-start gap-2">
+<span class="text-outline shrink-0">[14:32:04.102]</span>
+<span class="text-tertiary shrink-0">AUTH_OK</span>
+<span class="text-on-surface-variant">WireGuard handshaking peer node: desktop-00ctdtl (DERP #14 direct endpoint verified).</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline shrink-0">[14:32:04.116]</span>
+<span class="text-secondary shrink-0">MTLS_PROV</span>
+<span class="text-on-surface-variant">Client cert attestation passed. SHA-256: e82b79c3f412...c901a (Valid through 2026).</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline shrink-0">[14:32:05.441]</span>
+<span class="text-primary shrink-0">SPOOL_PROBE</span>
+<span class="text-on-surface-variant">Querying Windows WinSpool API via RPC daemon: USB001 status reported 0x00000000 (PRINTER_STATUS_IDLE).</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline shrink-0">[14:32:05.520]</span>
+<span class="text-tertiary shrink-0">TELEMETRY_SYNC</span>
+<span class="text-on-surface-variant">SNMP &amp; USB HID bulk sensor polled: CMYK reservoir levels refreshed (88%/74%/91%/62%). Tray 1 72%.</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline shrink-0">[14:32:08.003]</span>
+<span class="text-secondary shrink-0">LATENCY_HEARTBEAT</span>
+<span class="text-on-surface-variant">Packet RTT to host: 13.8ms. Virtual spool transit pipe verified: 0.8ms. Zero spool backpressure.</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- BOTTOM TELEMETRY FOOTNOTE BAR -->
+<footer class="mt-space-md pt-space-sm border-t border-outline-variant/40 flex items-center justify-between text-label-sm font-label-sm text-outline">
+<div class="flex items-center gap-4">
+<span>SESSION: <span class="text-on-surface">TLS_AES_256_GCM_SHA384</span></span>
+<span>PEER PROTOCOL: <span class="text-on-surface">Tailscale v1.64.0 (Linux/Android 14)</span></span>
+<span>SPOOL ENGINE: <span class="text-on-surface">PrintGrid Daemon v4.2.1-ent</span></span>
+</div>
+<div>
+<span>Lenovo Tab P12 Landscape Canvas // Direct Hardware Spool Engine</span>
+</div>
+</footer>
+</main>
+<!-- LIGHTWEIGHT INTERACTIVITY FOR SPOOL SWITCHER RADIO -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const queueRadios = document.querySelectorAll('input[name="printer_queue"]');
+      
+      queueRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const cards = document.querySelectorAll('#queue-container label');
+          cards.forEach(card => {
+            const isChecked = card.querySelector('input[type="radio"]').checked;
+            if (isChecked) {
+              card.className = "relative block p-space-md rounded-lg border-2 border-primary bg-surface-container-high cursor-pointer transition-all select-none group shadow-[inset_0_0_0_1px_rgba(192,193,255,0.2)]";
+              const dot = card.querySelector('.rounded-full > div');
+              if (dot) dot.className = "w-2 h-2 rounded-full bg-primary";
+            } else {
+              card.className = "relative block p-space-md rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container hover:border-outline cursor-pointer transition-all select-none group";
+              const dot = card.querySelector('.rounded-full > div');
+              if (dot) dot.className = "w-2 h-2 rounded-full bg-transparent";
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body></html>

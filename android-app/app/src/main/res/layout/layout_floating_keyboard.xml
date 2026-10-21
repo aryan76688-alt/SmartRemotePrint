@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/floatingKeyboardContainer"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|end"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="16dp"
+    android:background="@drawable/bg_keyboard_window"
+    android:elevation="24dp"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:visibility="gone">
+
+    <!-- Header Drag & Control Bar -->
+    <LinearLayout
+        android:id="@+id/kbdHeaderDrag"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:background="#1E293B"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⠿ Drag Anywhere"
+            android:textColor="#38BDF8"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/kbdModeToggleBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_button"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="⌨ Full Keyboard"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/kbdOpacityBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_button_secondary"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:text="👁 100%"
+            android:textAllCaps="false"
+            android:textColor="#CBD5E1"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/kbdScaleDownBtn"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="2dp"
+            android:background="@drawable/bg_button_secondary"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="-"
+            android:textColor="#CBD5E1"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/kbdScaleUpBtn"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_button_secondary"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="+"
+            android:textColor="#CBD5E1"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/kbdCloseBtn"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_button_secondary"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="✕"
+            android:textColor="#F43F5E"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Panel 1: D-Pad & ERP Fast Navigation -->
+    <LinearLayout
+        android:id="@+id/panelDpad"
+        android:layout_width="340dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- Function Keys Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/dpadF1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F1" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F2" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F3" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F4" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F5" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F6" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F7" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/dpadF8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F8" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- D-Pad Directional Grid -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="vertical">
+
+            <!-- D-Pad Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:orientation="horizontal">
+
+                <Button android:id="@+id/dpadEsc" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Esc" android:textColor="#F43F5E" android:textSize="13sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadUp" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:layout_margin="2dp" android:background="@drawable/bg_key_dpad" android:minHeight="0dp" android:minWidth="0dp" android:text="▲ UP" android:textColor="#38BDF8" android:textSize="14sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadTab" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Tab ⇥" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- D-Pad Row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:orientation="horizontal">
+
+                <Button android:id="@+id/dpadLeft" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_dpad" android:minHeight="0dp" android:minWidth="0dp" android:text="◀ LEFT" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadEnter" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:layout_margin="2dp" android:background="@drawable/bg_button" android:minHeight="0dp" android:minWidth="0dp" android:text="↵ ENTER" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadRight" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_dpad" android:minHeight="0dp" android:minWidth="0dp" android:text="RIGHT ▶" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- D-Pad Row 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:orientation="horizontal">
+
+                <Button android:id="@+id/dpadBksp" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="⌫ Bksp" android:textColor="#E2E8F0" android:textSize="12sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadDown" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:layout_margin="2dp" android:background="@drawable/bg_key_dpad" android:minHeight="0dp" android:minWidth="0dp" android:text="▼ DOWN" android:textColor="#38BDF8" android:textSize="14sp" android:textStyle="bold" />
+                <Button android:id="@+id/dpadDel" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Del" android:textColor="#E2E8F0" android:textSize="12sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Quick ERP Numbers Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/dpadN1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="1" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="2" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="3" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="4" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="5" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="6" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="7" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="8" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="9" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadN0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="0" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadDot" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="." android:textColor="#FFFFFF" android:textSize="11sp" />
+            <Button android:id="@+id/dpadPlus" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="+" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Panel 2: Full Computer Keyboard -->
+    <LinearLayout
+        android:id="@+id/panelFullKeyboard"
+        android:layout_width="660dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Function Key Row (F1 - F12, Esc, Del) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kEsc" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Esc" android:textColor="#F43F5E" android:textSize="10sp" android:textStyle="bold" />
+            <Button android:id="@+id/kF1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F1" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F2" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F3" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F4" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F5" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F6" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F7" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F8" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F9" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F10" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF11" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F11" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kF12" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="F12" android:textColor="#FFFFFF" android:textSize="10sp" />
+            <Button android:id="@+id/kDel" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Del" android:textColor="#E2E8F0" android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Number Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kBackquote" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="`" android:textColor="#CBD5E1" android:textSize="11sp" />
+            <Button android:id="@+id/k1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="1" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="2" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="3" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="4" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="5" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="6" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="7" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="8" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="9" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/k0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="0" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kMinus" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="-" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kEqual" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="=" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kBksp" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.6" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="⌫ Bksp" android:textColor="#E2E8F0" android:textSize="11sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- QWERTY Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kTab" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.4" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Tab ⇥" android:textColor="#38BDF8" android:textSize="11sp" android:textStyle="bold" />
+            <Button android:id="@+id/kQ" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Q" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kW" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="W" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kE" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="E" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kR" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="R" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kT" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="T" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kY" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Y" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kU" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="U" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kI" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="I" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kO" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="O" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kP" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="P" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kLBracket" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="[" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kRBracket" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="]" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kBackslash" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="\\" android:textColor="#CBD5E1" android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- ASDF Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kCaps" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.6" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Caps" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" />
+            <Button android:id="@+id/kA" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="A" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kS" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="S" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kD" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="D" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kF" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="F" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kG" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="G" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kH" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="H" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kJ" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="J" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kK" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="K" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kL" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="L" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kSemicolon" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text=";" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kQuote" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="'" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kEnter" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="2" android:layout_margin="1dp" android:background="@drawable/bg_button" android:minHeight="0dp" android:minWidth="0dp" android:text="↵ Enter" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- ZXCV Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kShift" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="2" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="⇧ Shift" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" />
+            <Button android:id="@+id/kZ" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Z" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kX" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="X" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kC" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="C" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kV" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="V" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kB" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="B" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kN" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="N" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kM" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="M" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <Button android:id="@+id/kComma" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="," android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kPeriod" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="." android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kSlash" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="/" android:textColor="#CBD5E1" android:textSize="12sp" />
+            <Button android:id="@+id/kUp" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="▲" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            <Button android:id="@+id/kPgUp" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="PgUp" android:textColor="#CBD5E1" android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Bottom Space & Modifiers Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/kCtrl" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.3" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Ctrl" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" />
+            <Button android:id="@+id/kAlt" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.3" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Alt" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" />
+            <Button android:id="@+id/kHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="Home" android:textColor="#CBD5E1" android:textSize="10sp" />
+            <Button android:id="@+id/kSpace" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="4" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="SPACE" android:textColor="#94A3B8" android:textSize="11sp" />
+            <Button android:id="@+id/kEnd" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="End" android:textColor="#CBD5E1" android:textSize="10sp" />
+            <Button android:id="@+id/kLeft" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="◀" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            <Button android:id="@+id/kDown" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="▼" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            <Button android:id="@+id/kRight" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_action" android:minHeight="0dp" android:minWidth="0dp" android:text="▶" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
+            <Button android:id="@+id/kPgDn" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="1dp" android:background="@drawable/bg_key_normal" android:minHeight="0dp" android:minWidth="0dp" android:text="PgDn" android:textColor="#CBD5E1" android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

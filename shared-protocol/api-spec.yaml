@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Smart Remote Print Agent API
+  version: 1.0.0
+  description: Secure private REST API running on Windows 10 office PC (port 8766) over Tailscale mesh network.
+servers:
+  - url: http://desktop-00ctdtl.tailfc14cd.ts.net:8766/api/v1
+    description: Tailscale MagicDNS Endpoint
+  - url: http://100.111.100.122:8766/api/v1
+    description: Direct Tailscale Mesh IPv4 Endpoint
+paths:
+  /health:
+    get:
+      summary: Health & Telemetry Status
+      responses:
+        '200':
+          description: Agent operational status
+  /pair:
+    post:
+      summary: Device Pairing & Token Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairingRequest'
+      responses:
+        '200':
+          description: Paired successfully with Bearer token
+        '401':
+          description: Invalid pairing PIN
+  /printers:
+    get:
+      summary: Enumerate Windows Printer Queues
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of installed Windows printers with status & ports
+  /print:
+    post:
+      summary: Submit PDF Print Job to Windows Spooler
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                metadata:
+                  type: string
+                  description: JSON string of PrintJobSubmission
+                file:
+                  type: string
+                  format: binary
+                  description: Valid PDF document payload (max 50MB)
+      responses:
+        '200':
+          description: Job spooled successfully
+        '400':
+          description: Invalid PDF format or corrupt magic bytes
+        '409':
+          description: Duplicate job submission rejected
+        '503':
+          description: Printer offline or out of paper
+  /jobs/{jobId}:
+    get:
+      summary: Query Spooler Job Status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Real-time spooler progress
+  /jobs/{jobId}/cancel:
+    post:
+      summary: Cancel In-Flight Spooler Job
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job cancelled
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

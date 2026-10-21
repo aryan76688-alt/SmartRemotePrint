@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PrintGrid Orchestrator - Enterprise Remote Print</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Geist & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-container": "#0d0096",
+            "on-tertiary-fixed-variant": "#005236",
+            "primary": "#c0c1ff",
+            "on-background": "#dfe2ef",
+            "on-primary": "#1000a9",
+            "tertiary-container": "#00885d",
+            "on-secondary-fixed": "#001e2c",
+            "surface-dim": "#0f131c",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#c0c1ff",
+            "outline": "#908fa0",
+            "primary-container": "#8083ff",
+            "error-container": "#93000a",
+            "surface": "#0f131c",
+            "on-tertiary-container": "#000703",
+            "surface-container-highest": "#31353f",
+            "error": "#ffb4ab",
+            "surface-container": "#1c1f29",
+            "inverse-on-surface": "#2c303a",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-error-container": "#ffdad6",
+            "surface-tint": "#c0c1ff",
+            "outline-variant": "#464554",
+            "surface-container-low": "#181b25",
+            "inverse-surface": "#dfe2ef",
+            "surface-bright": "#353943",
+            "on-error": "#690005",
+            "on-secondary-container": "#00374d",
+            "inverse-primary": "#494bd6",
+            "surface-container-high": "#262a34",
+            "surface-container-lowest": "#0a0e17",
+            "on-surface-variant": "#c7c4d7",
+            "on-tertiary": "#003824",
+            "secondary-container": "#00a6e0",
+            "primary-fixed": "#e1e0ff",
+            "surface-variant": "#31353f",
+            "secondary": "#7bd0ff",
+            "tertiary-fixed": "#6ffbbe",
+            "on-secondary": "#00354a",
+            "secondary-fixed": "#c4e7ff",
+            "on-surface": "#dfe2ef",
+            "on-secondary-fixed-variant": "#004c69",
+            "background": "#0f131c",
+            "on-primary-fixed": "#07006c",
+            "on-tertiary-fixed": "#002113",
+            "tertiary": "#4edea3"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.25rem",
+            "margin": "1.25rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Geist"],
+            "body-sm": ["Geist"],
+            "label-lg": ["JetBrains Mono"],
+            "headline-xl": ["Geist"],
+            "headline-md": ["Geist"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "code-display": ["JetBrains Mono"],
+            "headline-lg": ["Geist"],
+            "label-md": ["JetBrains Mono"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-sm": ["1.125rem", { "lineHeight": "1.5rem", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["0.75rem", { "lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-xl": ["2rem", { "lineHeight": "2.5rem", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "headline-md": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.015em", "fontWeight": "500" }],
+            "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.05em", "fontWeight": "400" }],
+            "body-md": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0em", "fontWeight": "400" }],
+            "code-display": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "0.15em", "fontWeight": "700" }],
+            "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-lg": ["1rem", { "lineHeight": "1.5rem", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 1.15rem;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Hardware PIN cursor pulse */
+    @keyframes pin-caret {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .animate-pin-caret {
+      animation: pin-caret 1s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    /* Subtle mesh telemetry beacon pulse */
+    @keyframes mesh-beacon {
+      0% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(78, 222, 163, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
+    }
+    .beacon-pulse {
+      animation: mesh-beacon 2.4s infinite cubic-bezier(0.24, 0, 0.38, 1);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden select-none font-body-md min-h-screen">
+<!-- ========================================================================= -->
+<!-- SHARED COMPONENT 1: SideNavBar                                            -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-64 flex flex-col bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant dark:border-outline-variant z-40">
+<div class="h-full flex flex-col justify-between p-space-md">
+<!-- Upper Section: Branding & Navigation -->
+<div class="flex flex-col gap-space-md">
+<!-- Header Branding & Engine Node Info -->
+<div class="flex items-center gap-space-sm px-space-xs py-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="hub">hub</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<div class="flex items-center gap-space-xs">
+<span class="text-headline-sm font-headline-sm font-semibold text-primary dark:text-primary tracking-tight truncate">PrintGrid Engine</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">v4.2.1-ent</span>
+</div>
+</div>
+<!-- System Action: Pair Peer Primary CTA -->
+<button class="w-full flex items-center justify-center gap-space-xs py-space-sm px-space-md rounded-lg bg-primary-container text-on-primary font-headline-sm text-label-md font-medium shadow-sm hover:opacity-95 active:scale-[0.99] transition-transform duration-100 ease-out">
+<span class="material-symbols-outlined" data-icon="add_link">add_link</span>
+<span>Pair Peer</span>
+</button>
+<!-- Navigation Cluster -->
+<nav class="flex flex-col gap-space-xs mt-space-xs">
+<!-- Overview -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="dashboard">dashboard</span>
+<span class="text-label-md font-label-md">Overview</span>
+</a>
+<!-- Print Queue -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="print">print</span>
+<span class="text-label-md font-label-md">Print Queue</span>
+<span class="ml-auto text-label-sm font-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-outline">0</span>
+</a>
+<!-- Discovered Nodes (ACTIVE: maps to Pairing/Discovery context) -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm bg-surface-container-high dark:bg-surface-container-high text-primary dark:text-primary rounded-lg border-l-2 border-primary active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="radar">radar</span>
+<span class="text-label-md font-label-md font-semibold">Discovered Nodes</span>
+<span class="ml-auto text-label-sm font-label-sm bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded font-medium">1 New</span>
+</a>
+<!-- Mesh Network -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="hub">hub</span>
+<span class="text-label-md font-label-md">Mesh Network</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+<!-- Diagnostics -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="terminal">terminal</span>
+<span class="text-label-md font-label-md">Diagnostics</span>
+</a>
+</nav>
+</div>
+<!-- Footer Section: Secondary utilities & Identity badge -->
+<div class="flex flex-col gap-space-xs pt-space-md border-t border-outline-variant">
+<!-- Documentation -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="menu_book">menu_book</span>
+<span class="text-label-md font-label-md">Documentation</span>
+</a>
+<!-- Lock Session -->
+<a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant rounded-lg hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface dark:hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="lock">lock</span>
+<span class="text-label-md font-label-md">Lock Session</span>
+</a>
+<!-- Tablet / Node Session Telemetry Tag -->
+<div class="mt-space-sm p-space-sm bg-surface-container-lowest rounded-lg border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface font-mono">Lenovo P12-NODE</span>
+<span class="text-label-sm font-label-sm text-outline">Direct 3K (WQXGA)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="tablet_android">tablet_android</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- SHARED COMPONENT 2: TopNavBar                                             -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 right-0 left-64 h-14 bg-surface-container-lowest dark:bg-surface-container-lowest border-b border-outline-variant dark:border-outline-variant z-30">
+<div class="flex justify-between items-center px-space-lg h-full w-full">
+<!-- Left Anchor: Product & Live Mesh Status Beacon -->
+<div class="flex items-center gap-space-lg">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-on-surface tracking-tight">PrintGrid Orchestrator</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- WireGuard / Tailscale Live Telemetry Pill -->
+<div class="flex items-center gap-space-xs bg-surface-container px-2.5 py-1 rounded-full border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-tertiary beacon-pulse shrink-0"></span>
+<span class="text-label-sm font-label-sm text-tertiary font-medium">Tailscale Mesh Active</span>
+<span class="text-label-sm font-label-sm text-outline">|</span>
+<span class="text-label-sm font-label-sm text-secondary font-mono">14ms WireGuard Direct</span>
+</div>
+</div>
+<!-- Right Trailing Actions & Operator Identity -->
+<div class="flex items-center gap-space-md">
+<!-- Telemetry Diagnostic Icons -->
+<div class="flex items-center gap-space-sm text-on-surface-variant pr-space-xs">
+<div class="flex items-center gap-1 text-label-sm font-label-sm font-mono text-outline">
+<span class="material-symbols-outlined text-tertiary" data-icon="battery_charging_full">battery_charging_full</span>
+<span>98%</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-label-sm font-mono text-outline ml-2">
+<span class="material-symbols-outlined text-secondary" data-icon="wifi">wifi</span>
+<span>5GHz 866Mbps</span>
+</div>
+<div class="flex items-center gap-1 text-label-sm font-label-sm font-mono text-outline ml-2">
+<span class="material-symbols-outlined text-primary" data-icon="security">security</span>
+<span>mTLS Strict</span>
+</div>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- Secondary Action: Emergency Stop -->
+<button class="flex items-center gap-space-xs px-2.5 py-1 text-label-sm font-label-sm rounded-lg border border-error text-error hover:bg-error-container/30 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-sm" data-icon="emergency_home">emergency_home</span>
+<span>Emergency Stop</span>
+</button>
+<!-- Primary Action: Sync Telemetry -->
+<button class="flex items-center gap-space-xs px-3 py-1 text-label-sm font-label-sm rounded-lg bg-surface-container-high border border-outline-variant text-secondary hover:bg-surface-container transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="sync">sync</span>
+<span>Sync Telemetry</span>
+</button>
+<!-- Operator Badge -->
+<div class="flex items-center gap-space-xs pl-space-xs">
+<div class="w-7 h-7 rounded-full bg-primary-container/20 border border-primary/40 flex items-center justify-center text-primary text-label-sm font-mono font-bold">
+            OP
+          </div>
+<div class="flex flex-col text-left">
+<span class="text-label-sm font-label-sm text-on-surface font-semibold leading-tight">sec-ops.admin</span>
+<span class="text-label-sm font-label-sm text-outline text-[0.625rem] leading-none">ID #9042-EXT</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE: 16-Column 12.7" Tablet Precision Dual-Pane Grid          -->
+<!-- ========================================================================= -->
+<main class="ml-64 mt-14 h-[calc(100vh-3.5rem)] overflow-y-auto bg-background p-space-lg">
+<div class="max-w-[1920px] mx-auto grid grid-cols-16 gap-space-lg h-full">
+<!-- ===================================================================== -->
+<!-- LEFT COLUMN: Primary Pairing & Authentication Workspace (10 of 16 cols)-->
+<!-- ===================================================================== -->
+<section class="col-span-10 flex flex-col gap-space-md h-full">
+<!-- Workflow Telemetry Stepper -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="text-label-md font-label-md text-primary font-bold">DEVICE PROVISIONING PIPELINE</span>
+<span class="text-label-sm font-label-sm text-outline font-mono">// WIDE-BAND P2P</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline font-mono">Tailscale Subnet 100.64.0.0/10</span>
+</div>
+<div class="grid grid-cols-3 gap-space-sm relative">
+<!-- Step 1: Active -->
+<div class="flex items-center gap-space-xs p-space-sm rounded bg-surface-container-high border-l-2 border-primary">
+<span class="w-5 h-5 rounded-full bg-primary text-on-primary text-label-sm font-label-sm font-bold flex items-center justify-center shrink-0">01</span>
+<div class="flex flex-col min-w-0">
+<span class="text-label-md font-label-md text-on-surface font-medium truncate">Discovery &amp; Auth</span>
+<span class="text-label-sm font-label-sm text-primary font-mono truncate">In Progress (PIN Req)</span>
+</div>
+</div>
+<!-- Step 2: Next -->
+<div class="flex items-center gap-space-xs p-space-sm rounded bg-surface-container-lowest border border-outline-variant/60 opacity-60">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest text-outline text-label-sm font-label-sm font-bold flex items-center justify-center shrink-0">02</span>
+<div class="flex flex-col min-w-0">
+<span class="text-label-md font-label-md text-on-surface truncate">Spooler Binding</span>
+<span class="text-label-sm font-label-sm text-outline font-mono truncate">Pending Auth</span>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="flex items-center gap-space-xs p-space-sm rounded bg-surface-container-lowest border border-outline-variant/60 opacity-60">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest text-outline text-label-sm font-label-sm font-bold flex items-center justify-center shrink-0">03</span>
+<div class="flex flex-col min-w-0">
+<span class="text-label-md font-label-md text-on-surface truncate">Ready State</span>
+<span class="text-label-sm font-label-sm text-outline font-mono truncate">Driver Sync</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Primary Target Hardware Card: Discovered Office Windows PC -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-space-lg flex-1 flex flex-col justify-between">
+<div class="flex flex-col gap-space-md">
+<!-- Target Card Header -->
+<div class="flex items-start justify-between pb-space-sm border-b border-outline-variant">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="desktop_windows">desktop_windows</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<h2 class="text-headline-md font-headline-md text-on-surface font-semibold tracking-tight">Discovered Office Workstation</h2>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-tertiary-container/30 border border-tertiary/50 text-tertiary font-mono">
+                      DIRECT P2P REACHABLE
+                    </span>
+</div>
+<!-- Monospace Hostname & Tailscale MagicDNS -->
+<div class="flex items-center gap-space-xs mt-1">
+<span class="font-code-display text-label-lg font-mono text-secondary tracking-normal font-semibold">desktop-00ctdtl.tailfc14cd.ts.net</span>
+<button class="text-outline hover:text-on-surface p-0.5 transition-colors" title="Copy Hostname">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+<span class="text-label-sm font-label-sm text-outline ml-2 px-1.5 py-0.2 rounded bg-surface-container border border-outline-variant font-mono">100.94.218.42</span>
+</div>
+</div>
+</div>
+<!-- Refresh Target Discovery Button -->
+<button class="flex items-center gap-space-xs px-2.5 py-1 text-label-sm font-label-sm bg-surface-container rounded border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="refresh">refresh</span>
+<span>Refresh Discovery</span>
+</button>
+</div>
+<!-- Hardware Telemetry Matrix -->
+<div class="grid grid-cols-3 gap-space-sm">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm flex flex-col gap-0.5">
+<span class="text-label-sm font-label-sm text-outline">OPERATING SYSTEM</span>
+<span class="text-label-md font-label-md text-on-surface font-mono font-medium">Windows 11 Pro Enterprise</span>
+<span class="text-label-sm font-label-sm text-outline font-mono">Kernel Build 22631.3880</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm flex flex-col gap-0.5">
+<span class="text-label-sm font-label-sm text-outline">TUNNEL ENCRYPTION</span>
+<span class="text-label-md font-label-md text-tertiary font-mono font-medium">ChaCha20-Poly1305</span>
+<span class="text-label-sm font-label-sm text-outline font-mono">DERP Bypass: Active (14ms RTT)</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm flex flex-col gap-0.5">
+<span class="text-label-sm font-label-sm text-outline">NODE CRYPTO KEY</span>
+<span class="text-label-md font-label-md text-on-surface-variant font-mono font-medium">nodekey:8f4c...91b0</span>
+<span class="text-label-sm font-label-sm text-tertiary font-mono">Verified mTLS Signature</span>
+</div>
+</div>
+<!-- Shared Printer Hardware Discovered on Host PC -->
+<div class="flex flex-col gap-space-xs mt-space-xs">
+<span class="text-label-sm font-label-sm text-outline font-medium tracking-wide">HOST ATTACHED PRINTER HARDWARE (READY FOR BINDING)</span>
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Device 1 -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="print">print</span>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md font-semibold text-on-surface">HP LaserJet Managed MFP E82650</span>
+<span class="text-label-sm font-label-sm text-outline font-mono">Driver: PCL6 Enterprise Class v8.2</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-tertiary-container/20 text-tertiary border border-tertiary/40 font-mono">Shared</span>
+</div>
+<!-- Device 2 -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-xl" data-icon="barcode_scanner">barcode_scanner</span>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md font-semibold text-on-surface">Zebra ZT411 Industrial RFID</span>
+<span class="text-label-sm font-label-sm text-outline font-mono">Protocol: ZPL Direct Spool (203dpi)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-tertiary-container/20 text-tertiary border border-tertiary/40 font-mono">Shared</span>
+</div>
+</div>
+</div>
+<!-- 6-Digit Secure Monospace Pairing PIN Well -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-space-md mt-space-xs flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-label-md font-label-md text-on-surface font-semibold">Two-Way Handshake Pairing PIN</span>
+<p class="text-body-sm font-body-sm text-outline">Enter the 6-digit confirmation code displayed on the host PC tray notification</p>
+</div>
+<button class="flex items-center gap-1 text-label-sm font-label-sm text-secondary hover:text-primary transition-colors font-mono">
+<span class="material-symbols-outlined text-sm" data-icon="forward_to_inbox">forward_to_inbox</span>
+<span>Request from Host Spooler</span>
+</button>
+</div>
+<!-- High Contrast Segmented 6-Digit Input Boxes -->
+<div class="flex items-center justify-center gap-space-md py-space-sm">
+<!-- Digit 1 -->
+<div class="w-14 h-16 rounded-lg bg-surface-container border-2 border-primary flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)]">
+<span class="font-code-display text-code-display text-on-surface">4</span>
+</div>
+<!-- Digit 2 -->
+<div class="w-14 h-16 rounded-lg bg-surface-container border-2 border-primary flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)]">
+<span class="font-code-display text-code-display text-on-surface">9</span>
+</div>
+<!-- Digit 3 -->
+<div class="w-14 h-16 rounded-lg bg-surface-container border-2 border-primary flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)]">
+<span class="font-code-display text-code-display text-on-surface">1</span>
+</div>
+<!-- Divider dash -->
+<div class="text-outline text-headline-lg font-mono px-1">-</div>
+<!-- Digit 4 -->
+<div class="w-14 h-16 rounded-lg bg-surface-container border-2 border-primary flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)]">
+<span class="font-code-display text-code-display text-on-surface">8</span>
+</div>
+<!-- Digit 5 (Active focused caret) -->
+<div class="w-14 h-16 rounded-lg bg-surface-container-high border-2 border-secondary flex items-center justify-center shadow-[0_0_16px_rgba(123,208,255,0.35)] relative">
+<span class="w-0.5 h-8 bg-secondary animate-pin-caret"></span>
+</div>
+<!-- Digit 6 (Awaiting) -->
+<div class="w-14 h-16 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-center">
+<span class="text-outline/40 font-code-display text-code-display">_</span>
+</div>
+</div>
+<!-- Security Keyline Note -->
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline font-mono px-space-xs">
+<span>PIN TTL: 02:44 REMAINING</span>
+<span>SHA-256 SESSION CHUNK: #FA89-C10E</span>
+</div>
+</div>
+</div>
+<!-- Primary Commit Action Deck -->
+<div class="pt-space-md border-t border-outline-variant flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-xs text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-base text-tertiary" data-icon="verified_user">verified_user</span>
+<span>TLS 1.3 &amp; Device Mutual Attestation will be stored in local TPM keystore.</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-space-sm rounded-lg border border-outline-variant bg-surface-container text-on-surface font-label-md font-medium hover:bg-surface-container-high transition-colors">
+                Cancel Discovery
+              </button>
+<!-- Indigo Glow Commit Button -->
+<button class="px-space-lg py-space-sm rounded-lg bg-primary text-on-primary font-label-md font-bold flex items-center gap-space-xs shadow-[0_0_20px_rgba(99,102,241,0.45)] hover:bg-primary-container transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-lg" data-icon="cable">cable</span>
+<span>Connect &amp; Authorize Node</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- RIGHT COLUMN: Active Paired Hardware & Telemetry Widgets (6 of 16 cols)-->
+<!-- ===================================================================== -->
+<section class="col-span-6 flex flex-col gap-space-md h-full">
+<!-- Active Paired Hardware Roster -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant">
+<div class="flex items-center gap-space-xs">
+<span class="text-label-md font-label-md text-on-surface font-semibold">Active Paired Hardware</span>
+<span class="text-label-sm font-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-outline font-mono">3 Registered</span>
+</div>
+<a class="text-label-sm font-label-sm text-secondary hover:underline font-mono" href="#">Fleet Config</a>
+</div>
+<!-- Peer List Cards -->
+<div class="flex flex-col gap-space-xs">
+<!-- Peer Card 1: Online / Idle -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-space-sm flex flex-col gap-1.5 hover:border-secondary/50 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-label-md font-label-md font-mono text-on-surface font-medium truncate">design-lab-pc.ts.net</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[0.625rem] font-label-sm bg-surface-container-highest text-tertiary font-mono">ONLINE / IDLE</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span class="truncate">Canon imagePROGRAF PRO-4100</span>
+<span class="font-mono text-on-surface-variant">0 Queued</span>
+</div>
+<!-- CMYK Ink Reservoir Micro Bar -->
+<div class="w-full bg-surface-container-lowest h-1.5 rounded-full flex gap-0.5 overflow-hidden border border-outline-variant/40 mt-0.5">
+<div class="bg-cyan-400 h-full w-[82%]" title="Cyan: 82%"></div>
+<div class="bg-pink-500 h-full w-[64%]" title="Magenta: 64%"></div>
+<div class="bg-yellow-400 h-full w-[91%]" title="Yellow: 91%"></div>
+<div class="bg-neutral-200 h-full w-[78%]" title="Black: 78%"></div>
+</div>
+</div>
+<!-- Peer Card 2: Busy / Active Jobs -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-space-sm flex flex-col gap-1.5 hover:border-secondary/50 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-label-md font-label-md font-mono text-on-surface font-medium truncate">warehouse-dispatch.ts.net</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[0.625rem] font-label-sm bg-secondary/15 text-secondary border border-secondary/30 font-mono">SPOOLING (3 JOBS)</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span class="truncate">Zebra ZT610 600dpi Thermal</span>
+<span class="font-mono text-secondary">Waybills #440-443</span>
+</div>
+<!-- Progress Bar for Active Job -->
+<div class="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden border border-outline-variant/40 mt-0.5">
+<div class="bg-secondary h-full w-[54%]"></div>
+</div>
+</div>
+<!-- Peer Card 3: Offline -->
+<div class="bg-surface-container border border-outline-variant/50 rounded-lg p-space-sm flex flex-col gap-1.5 opacity-70">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-label-md font-label-md font-mono text-outline font-medium truncate">studio-plotter-station.ts.net</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[0.625rem] font-label-sm bg-error-container/30 text-error font-mono">OFFLINE 2h AGO</span>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span class="truncate">Epson SureColor P9000</span>
+<span class="font-mono text-error">Unreachable</span>
+</div>
+</div>
+</div>
+</div>
+<!-- System Telemetry & Encryption Matrix -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-space-md flex flex-col gap-space-sm flex-1">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant">
+<span class="text-label-md font-label-md text-on-surface font-semibold">Mesh Security &amp; Spool Telemetry</span>
+<span class="material-symbols-outlined text-outline text-base" data-icon="lock_clock">lock_clock</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs text-label-sm font-label-sm font-mono">
+<div class="p-space-xs bg-surface-container rounded border border-outline-variant flex flex-col gap-0.5">
+<span class="text-outline text-[0.625rem]">LOCAL BUFFER</span>
+<span class="text-on-surface font-bold">128 MB DRAM</span>
+<span class="text-tertiary text-[0.625rem]">0% Fragmentation</span>
+</div>
+<div class="p-space-xs bg-surface-container rounded border border-outline-variant flex flex-col gap-0.5">
+<span class="text-outline text-[0.625rem]">TAILSCALE ACL</span>
+<span class="text-tertiary font-bold">Enforced</span>
+<span class="text-outline text-[0.625rem]">Tag: print-dispatch</span>
+</div>
+<div class="p-space-xs bg-surface-container rounded border border-outline-variant flex flex-col gap-0.5">
+<span class="text-outline text-[0.625rem]">RASTER ENGINE</span>
+<span class="text-on-surface font-bold">Ghostscript 10.3</span>
+<span class="text-outline text-[0.625rem]">Vector SIMD Active</span>
+</div>
+<div class="p-space-xs bg-surface-container rounded border border-outline-variant flex flex-col gap-0.5">
+<span class="text-outline text-[0.625rem]">LATENCY JITTER</span>
+<span class="text-secondary font-bold">±0.4 ms</span>
+<span class="text-outline text-[0.625rem]">0.00% Packet Loss</span>
+</div>
+</div>
+<!-- Micro Terminal Live Log Stream -->
+<div class="mt-auto bg-surface-container-lowest border border-outline-variant rounded p-space-sm font-mono text-[0.6875rem] flex flex-col gap-1 text-outline">
+<div class="flex items-center justify-between text-[0.625rem] text-on-surface-variant font-bold border-b border-outline-variant/40 pb-0.5">
+<span>LIVE MESH TRAFFIC LOG</span>
+<span class="text-tertiary">RX: 4.8 KB/s</span>
+</div>
+<div class="truncate text-on-surface-variant"><span class="text-secondary">10:41:22</span> [wireguard] peer(00ctdtl) Handshake OK via DERP-11-syd</div>
+<div class="truncate text-on-surface-variant"><span class="text-secondary">10:41:23</span> [tailscale] direct udp path established: 192.168.1.182:41641</div>
+<div class="truncate text-primary"><span class="text-secondary">10:41:28</span> [spooler] awaiting user PIN verification for auth ticket #8841</div>
+</div>
+<!-- Hardware Ergonomic Lenovo Banner Note -->
+<div class="mt-space-xs p-2 rounded bg-surface-container border border-outline-variant flex items-center gap-space-sm text-outline">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="stylus">stylus</span>
+<span class="text-label-sm font-label-sm font-sans leading-tight">
+              Optimized for <strong class="text-on-surface">Lenovo Tab P12 Pen</strong> &amp; 12.7" 3K Touch Digitizer.
+            </span>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
