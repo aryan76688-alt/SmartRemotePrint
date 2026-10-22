@@ -97,6 +97,41 @@ if (Test-Path $sourceSumatra) {
     Write-Host "  -> Installed SumatraPDF GDI Raster Engine successfully." -ForegroundColor Green
 }
 
+# Deploy MargSync Watch Folder and Templates (for Shreeji Order Book & Envelope Print Manager)
+$margSyncDir = "C:\SmartRemotePrint\MargSync"
+if (-not (Test-Path $margSyncDir)) {
+    New-Item -ItemType Directory -Path $margSyncDir -Force | Out-Null
+}
+$stockSample = Join-Path $margSyncDir "stock_sample.csv"
+if (-not (Test-Path $stockSample)) {
+    @"
+ItemCode,ItemName,Packing,Batch,Expiry,MRP,Rate,CurrentStock,Company
+PARA650,Paracetamol 650mg Tab,10x10,B892,12/2027,32.50,22.00,450,Cipla
+AMOX500,Amoxicillin 500mg Cap,10x10,A102,08/2026,85.00,62.00,120,Alkem
+AZI500,Azithromycin 500mg Tab,3s,Z551,04/2027,119.00,84.00,280,Mankind
+PAN40,Pantoprazole 40mg Tab,10x10,P331,10/2026,95.00,68.00,0,Sun Pharma
+"@ | Out-File -FilePath $stockSample -Encoding utf8
+}
+$outSample = Join-Path $margSyncDir "outstanding_sample.csv"
+if (-not (Test-Path $outSample)) {
+    @"
+PartyCode,PartyName,Address,Phone,TotalOutstanding,OverdueAmount,CreditLimit,BillCount,LastBillDate
+SHR001,Shreeji Medical Store,Station Road Anand,9825012345,14500.00,4500.00,25000.00,3,15/10/2026
+KIR002,Kiran Healthcare & Chemist,Main Bazar Nadiad,9825098765,48200.00,18200.00,30000.00,5,10/10/2026
+PAT003,Patel Pharmacy Wholesale,GIDC V.U. Nagar,9898011223,0.00,0.00,50000.00,0,01/10/2026
+"@ | Out-File -FilePath $outSample -Encoding utf8
+}
+Write-Host "  -> Configured MargSync Watch Folder at $margSyncDir." -ForegroundColor Green
+
+# Deploy Windows 10/11 Pharma Key Translation Scripts
+foreach ($kFile in @("MargPharmaKeys.ahk", "MargPharmaKeys.ps1", "MargPharmaKeys.bat")) {
+    $src = Join-Path $PSScriptRoot $kFile
+    if (Test-Path $src) {
+        Copy-Item -Path $src -Destination (Join-Path $InstallPath $kFile) -Force
+    }
+}
+Write-Host "  -> Installed Marg Pharma Key Mapping (Alt+2=Date, Alt+3=Item, Alt+7=Cash, Alt+9=Print, Alt+0=Save)." -ForegroundColor Green
+
 # 5. Configure Windows Firewall for Port 8766
 Write-Host ""
 Write-Host "[4/6] Configuring Windows Firewall rule for port 8766..." -ForegroundColor Yellow
@@ -161,6 +196,8 @@ try {
     Write-Host " Pairing PIN: [ 260890 ] (Ready for Lenovo Tab P12)" -ForegroundColor Cyan
     Write-Host " Health Status: $($health.status) | Port: 8766 | Machine: $($env:COMPUTERNAME)" -ForegroundColor White
     Write-Host " Default Queue: $($health.defaultPrinter)" -ForegroundColor White
+    Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync (Direct Stock & Outstandings)" -ForegroundColor Cyan
+    Write-Host " Pharma Keys: MargPharmaKeys.bat (Windows 10/11 Alt+2=Date, Alt+3=Item, Alt+9=Print, Alt+0=Save)" -ForegroundColor Yellow
     Write-Host " 24/7 Mode: ACTIVE (Printing works even when laptop is turned off)" -ForegroundColor Green
     Write-Host "===================================================================" -ForegroundColor Green
 } catch {
@@ -168,6 +205,7 @@ try {
     Write-Host "===================================================================" -ForegroundColor Green
     Write-Host " SUCCESS: SMART REMOTE PRINT SERVICE IS INSTALLED AND RUNNING!" -ForegroundColor Green
     Write-Host " Pairing PIN: [ 260890 ] (Ready for Lenovo Tab P12)" -ForegroundColor Cyan
+    Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync" -ForegroundColor Cyan
     Write-Host " Check Task Manager or services.msc to confirm SmartRemotePrintAgent." -ForegroundColor White
     Write-Host "===================================================================" -ForegroundColor Green
 }

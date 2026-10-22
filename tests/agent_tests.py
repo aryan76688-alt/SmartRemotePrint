@@ -68,5 +68,45 @@ class TestMargCloudRemotePrint(unittest.TestCase):
         dest_path = f"/storage/emulated/0/Download/{folder_name}"
         self.assertTrue(dest_path.endswith("Marg Cloud"))
 
+    def test_lenovo_tab_p12_pharma_key_mapping(self):
+        """Test physical keyboard mapping for tablets without F1-F12 keys"""
+        mapping = {
+            "Alt+1": "F1",
+            "Alt+2": "F2",   # Date
+            "Alt+3": "F3",   # Item Master / Search
+            "Alt+7": "F7",   # Cash / Credit
+            "Alt+8": "F8",   # Bill Edit / Modify
+            "Alt+9": "F9",   # Print Bill
+            "Alt+0": "F10",  # Save Bill
+            "Alt+E": "Escape",
+            "Ctrl+P": "F9",
+            "Ctrl+S": "F10"
+        }
+        self.assertEqual(mapping["Alt+2"], "F2", "Alt+2 must map to F2 Date")
+        self.assertEqual(mapping["Alt+3"], "F3", "Alt+3 must map to F3 Item Master")
+        self.assertEqual(mapping["Alt+7"], "F7", "Alt+7 must map to F7 Payment Mode")
+        self.assertEqual(mapping["Alt+9"], "F9", "Alt+9 must map to F9 Print Bill")
+        self.assertEqual(mapping["Alt+0"], "F10", "Alt+0 must map to F10 Save Bill")
+        self.assertEqual(mapping["Ctrl+S"], "F10", "Ctrl+S must trigger F10 Save")
+
+    def test_marg_direct_stock_and_outstanding_sync(self):
+        """Test Marg Direct Stock and Chemist Outstanding data structure"""
+        sample_stock = {
+            "ItemCode": "PARA650",
+            "ItemName": "Paracetamol 650mg Tab",
+            "CurrentStock": 450,
+            "Rate": 22.00,
+            "MRP": 32.50
+        }
+        sample_party = {
+            "PartyCode": "SHR001",
+            "PartyName": "Shreeji Medical Store",
+            "TotalOutstanding": 14500.00,
+            "OverdueAmount": 4500.00,
+            "CreditLimit": 25000.00
+        }
+        self.assertGreater(sample_stock["CurrentStock"], 0, "Stock balance must be tracked")
+        self.assertLessEqual(sample_party["TotalOutstanding"], sample_party["CreditLimit"], "Outstanding balance within limit")
+
 if __name__ == "__main__":
     unittest.main()

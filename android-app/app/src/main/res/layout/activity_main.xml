@@ -121,14 +121,25 @@
                 android:textStyle="bold" />
 
             <Button
-                android:id="@+id/barVirtualKbdBtn"
+                android:id="@+id/barPharmaBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_button"
-                android:text="⌨ Keyboard &amp; D-Pad"
+                android:text="⚡ Pharma Bar"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/barVirtualKbdBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_button_secondary"
+                android:text="⌨ D-Pad / Full"
+                android:textAllCaps="false"
+                android:textColor="#CBD5E1"
                 android:textStyle="bold" />
 
             <Button

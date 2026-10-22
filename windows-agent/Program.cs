@@ -18,6 +18,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 // Register services
 builder.Services.AddSingleton<ISecurityService, SecurityService>();
 builder.Services.AddSingleton<ISpoolerPrintService, SpoolerPrintService>();
+builder.Services.AddSingleton<IMargSyncService, MargSyncService>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -236,11 +237,72 @@ app.MapPost("/api/v1/jobs/{jobId}/cancel", (string jobId, HttpRequest request, I
     return Results.Ok(new { jobId, cancelled });
 });
 
+// ==============================================================================
+// 7. MARG ERP DIRECT STOCK & CHEMIST OUTSTANDING AUTO-SYNC ENDPOINTS
+// (Connects with Shreeji Healthcare Order Book & Marg ERP Envelope Print Manager)
+// ==============================================================================
+
+// 7a. Get Marg Sync Telemetry & Service Status
+app.MapGet("/api/v1/sync/status", (IMargSyncService sync) =>
+{
+    return Results.Ok(sync.GetStatus());
+});
+
+// 7b. Query Real-Time Item Stock (Eliminates Order Bouncing)
+app.MapGet("/api/v1/sync/stock", (string? search, int? limit, int? minStock, IMargSyncService sync) =>
+{
+    var items = sync.GetStock(search, limit ?? 100, minStock ?? -1);
+    return Results.Ok(new
+    {
+        count = items.Count,
+        query = search,
+        stock = items
+    });
+});
+
+// 7c. Query Chemist Outstanding & Overdue Balances (Eliminates Overdue Losses)
+app.MapGet("/api/v1/sync/outstanding", (string? search, bool? overdueOnly, int? limit, IMargSyncService sync) =>
+{
+    var parties = sync.GetOutstandings(search, overdueOnly ?? false, limit ?? 100);
+    return Results.Ok(new
+    {
+        count = parties.Count,
+        query = search,
+        overdueOnly = overdueOnly ?? false,
+        parties = parties
+    });
+});
+
+// 7d. Push Real-Time Stock or Ledger Outstandings (Direct JSON Ingestion)
+app.MapPost("/api/v1/sync/push", async ([FromBody] SyncPushPayload payload, IMargSyncService sync) =>
+{
+    await sync.IngestPayloadAsync(payload);
+    return Results.Ok(new
+    {
+        success = true,
+        message = "Marg ERP data ingested successfully.",
+        status = sync.GetStatus()
+    });
+});
+
+// 7e. Trigger Manual Disk Re-Scan of MargSync Folder
+app.MapPost("/api/v1/sync/refresh", async (IMargSyncService sync) =>
+{
+    await sync.TriggerSyncAsync();
+    return Results.Ok(new
+    {
+        success = true,
+        message = "MargSync folder scan completed.",
+        status = sync.GetStatus()
+    });
+});
+
 Console.WriteLine("===================================================================");
 Console.WriteLine(" SMART REMOTE PRINT AGENT - WINDOWS 10 SPOOLER SERVICE");
 Console.WriteLine(" Dedicated Port: 8766 (C:\\OfficePrint on 8765 preserved)");
 Console.WriteLine(" Target Printer: Brother DCP-T530DW Printer");
 Console.WriteLine(" Tailscale Host: desktop-00ctdtl.tailfc14cd.ts.net");
+Console.WriteLine(" Marg Sync Folder: C:\\SmartRemotePrint\\MargSync");
 Console.WriteLine("===================================================================");
 
 app.Run();

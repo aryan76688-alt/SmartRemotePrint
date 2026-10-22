@@ -115,6 +115,7 @@ class MainActivity : Activity() {
     private lateinit var accSaveBtn: Button
     private lateinit var accCloseBtn: Button
 
+    private lateinit var barPharmaBtn: Button
     private lateinit var barVirtualKbdBtn: Button
     private lateinit var floatingKeyboardContainer: LinearLayout
     private lateinit var kbdHeaderDrag: LinearLayout
@@ -123,12 +124,15 @@ class MainActivity : Activity() {
     private lateinit var kbdScaleDownBtn: Button
     private lateinit var kbdScaleUpBtn: Button
     private lateinit var kbdCloseBtn: Button
+    private lateinit var panelPharmaRibbon: LinearLayout
     private lateinit var panelDpad: LinearLayout
     private lateinit var panelFullKeyboard: LinearLayout
 
+    private var currentKbdMode = 0 // 0: Pharma Ribbon, 1: D-Pad, 2: Full Keyboard
     private var isFullKbdMode = false
     private var isKbdTransparent = false
     private var kbdScale = 1.0f
+    private var lastShortcutToastTime = 0L
 
     private var isCtrlActive = false
     private var isAltActive = false
@@ -305,6 +309,7 @@ class MainActivity : Activity() {
         accSaveBtn = findViewById(R.id.accSaveBtn)
         accCloseBtn = findViewById(R.id.accCloseBtn)
 
+        barPharmaBtn = findViewById(R.id.barPharmaBtn)
         barVirtualKbdBtn = findViewById(R.id.barVirtualKbdBtn)
         floatingKeyboardContainer = findViewById(R.id.floatingKeyboardContainer)
         kbdHeaderDrag = findViewById(R.id.kbdHeaderDrag)
@@ -313,6 +318,7 @@ class MainActivity : Activity() {
         kbdScaleDownBtn = findViewById(R.id.kbdScaleDownBtn)
         kbdScaleUpBtn = findViewById(R.id.kbdScaleUpBtn)
         kbdCloseBtn = findViewById(R.id.kbdCloseBtn)
+        panelPharmaRibbon = findViewById(R.id.panelPharmaRibbon)
         panelDpad = findViewById(R.id.panelDpad)
         panelFullKeyboard = findViewById(R.id.panelFullKeyboard)
 
@@ -722,6 +728,10 @@ class MainActivity : Activity() {
 
         barAccountsBtn.setOnClickListener {
             showAccountsModal()
+        }
+
+        barPharmaBtn.setOnClickListener {
+            togglePharmaRibbon()
         }
 
         barVirtualKbdBtn.setOnClickListener {
@@ -1169,18 +1179,81 @@ class MainActivity : Activity() {
 
     /**
      * DISPATCH KEY EVENT INTERCEPTOR:
-     * Intercepts keyboard Back & Esc at the root window, executes once on initial press (repeatCount == 0),
-     * and consumes the event to prevent secondary system handlers or double-firing.
+     * 1. Intercepts Alt+Number / Ctrl+Number combinations for physical keyboards without F1-F12
+     *    (specifically tailored for Lenovo Tab P12 accessory keyboard).
+     * 2. Intercepts physical F1-F12 and synthesizes standard Marg Cloud events.
+     * 3. Intercepts Back & Esc at root window, executes once on initial press, and consumes event.
      */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
+        val isAlt = event.isAltPressed
+        val isCtrl = event.isCtrlPressed
+        val action = event.action
+
+        // 1. Lenovo Tab P12 Custom Physical Keyboard Mappings (No F1-F12 keys on physical accessory)
+        if (isAlt || isCtrl) {
+            val mapped = when (keyCode) {
+                KeyEvent.KEYCODE_1 -> Triple("F1", "F1", 112)
+                KeyEvent.KEYCODE_2 -> Triple("F2", "F2", 113) // Date
+                KeyEvent.KEYCODE_3 -> Triple("F3", "F3", 114) // Item Master / Search
+                KeyEvent.KEYCODE_4 -> Triple("F4", "F4", 115)
+                KeyEvent.KEYCODE_5 -> Triple("F5", "F5", 116)
+                KeyEvent.KEYCODE_6 -> Triple("F6", "F6", 117)
+                KeyEvent.KEYCODE_7 -> Triple("F7", "F7", 118) // Cash / Credit
+                KeyEvent.KEYCODE_8 -> Triple("F8", "F8", 119) // Bill Modify / Edit
+                KeyEvent.KEYCODE_9, KeyEvent.KEYCODE_P -> Triple("F9", "F9", 120) // Print Bill
+                KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_S -> Triple("F10", "F10", 121) // Save Bill
+                KeyEvent.KEYCODE_MINUS -> Triple("F11", "F11", 122)
+                KeyEvent.KEYCODE_EQUALS -> Triple("F12", "F12", 123)
+                KeyEvent.KEYCODE_E -> Triple("Escape", "Escape", 27)
+                KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> Triple("Enter", "Enter", 13)
+                else -> null
+            }
+            if (mapped != null) {
+                if (action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    sendKeyToWeb(mapped.first, mapped.second, mapped.third, null)
+                    showPharmaShortcutToast(mapped.first)
+                }
+                return true // Consume: strictly prevents browser from typing digits into inputs
+            }
+        }
+
+        // 2. Hardware F1-F12 direct pass-through
+        if (keyCode in KeyEvent.KEYCODE_F1..KeyEvent.KEYCODE_F12) {
+            val fNum = keyCode - KeyEvent.KEYCODE_F1 + 1
+            if (action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                sendKeyToWeb("F$fNum", "F$fNum", 111 + fNum, null)
+                showPharmaShortcutToast("F$fNum")
+            }
+            return true
+        }
+
+        // 3. Hardware Escape & Back Lock
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            if (action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                 handleBackAction()
             }
             return true // ALWAYS consume: locks APK and blocks double-firing
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun showPharmaShortcutToast(keyName: String) {
+        val now = android.os.SystemClock.uptimeMillis()
+        if (now - lastShortcutToastTime > 1200) {
+            lastShortcutToastTime = now
+            val desc = when (keyName) {
+                "F2" -> "F2 (Date)"
+                "F3" -> "F3 (Item Master)"
+                "F7" -> "F7 (Cash/Credit)"
+                "F8" -> "F8 (Modify Bill)"
+                "F9" -> "F9 (Print Bill)"
+                "F10" -> "F10 (Save Bill)"
+                "Escape" -> "ESC"
+                else -> keyName
+            }
+            Toast.makeText(this, "⚡ Shortcut: $desc", Toast.LENGTH_SHORT).show()
+        }
     }
 
     /**
@@ -1253,6 +1326,18 @@ class MainActivity : Activity() {
     private fun setupVirtualKeyboard() {
         setupDraggableKeyboard()
         setupKeyboardControls()
+
+        // Bind Pharma Ribbon keys
+        bindKey(R.id.pharmaEsc, "Escape", "Escape", 27)
+        bindKey(R.id.pharmaF2, "F2", "F2", 113)
+        bindKey(R.id.pharmaF3, "F3", "F3", 114)
+        bindKey(R.id.pharmaF7, "F7", "F7", 118)
+        bindKey(R.id.pharmaF8, "F8", "F8", 119)
+        bindKey(R.id.pharmaF9, "F9", "F9", 120)
+        bindKey(R.id.pharmaF10, "F10", "F10", 121)
+        bindKey(R.id.pharmaEnter, "Enter", "Enter", 13)
+
+        setKeyboardMode(0)
 
         // Bind D-Pad keys
         bindKey(R.id.dpadF1, "F1", "F1", 112)
@@ -1413,28 +1498,56 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun toggleVirtualKeyboard() {
-        if (floatingKeyboardContainer.visibility == View.VISIBLE) {
+    private fun togglePharmaRibbon() {
+        if (floatingKeyboardContainer.visibility == View.VISIBLE && currentKbdMode == 0) {
             floatingKeyboardContainer.visibility = View.GONE
         } else {
             hideControlBar()
+            setKeyboardMode(0)
             floatingKeyboardContainer.visibility = View.VISIBLE
-            Toast.makeText(this, "⌨ Virtual Keyboard active: Drag header to move anywhere", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "⚡ Pharma Quick Bar active (F2, F3, F7, F8, F9, F10, ESC)", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun toggleVirtualKeyboard() {
+        if (floatingKeyboardContainer.visibility == View.VISIBLE && currentKbdMode != 0) {
+            floatingKeyboardContainer.visibility = View.GONE
+        } else {
+            hideControlBar()
+            setKeyboardMode(1) // Open D-Pad mode
+            floatingKeyboardContainer.visibility = View.VISIBLE
+            Toast.makeText(this, "⌨ Virtual D-Pad active: Drag header to move anywhere", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setKeyboardMode(mode: Int) {
+        currentKbdMode = mode
+        when (mode) {
+            0 -> {
+                panelPharmaRibbon.visibility = View.VISIBLE
+                panelDpad.visibility = View.GONE
+                panelFullKeyboard.visibility = View.GONE
+                kbdModeToggleBtn.text = "▲ D-Pad Mode"
+            }
+            1 -> {
+                panelPharmaRibbon.visibility = View.GONE
+                panelDpad.visibility = View.VISIBLE
+                panelFullKeyboard.visibility = View.GONE
+                kbdModeToggleBtn.text = "⌨ Full Keyboard"
+            }
+            2 -> {
+                panelPharmaRibbon.visibility = View.GONE
+                panelDpad.visibility = View.GONE
+                panelFullKeyboard.visibility = View.VISIBLE
+                kbdModeToggleBtn.text = "⚡ Pharma Bar"
+            }
         }
     }
 
     private fun setupKeyboardControls() {
         kbdModeToggleBtn.setOnClickListener {
-            isFullKbdMode = !isFullKbdMode
-            if (isFullKbdMode) {
-                panelDpad.visibility = View.GONE
-                panelFullKeyboard.visibility = View.VISIBLE
-                kbdModeToggleBtn.text = "🕹 D-Pad Mode"
-            } else {
-                panelFullKeyboard.visibility = View.GONE
-                panelDpad.visibility = View.VISIBLE
-                kbdModeToggleBtn.text = "⌨ Full Keyboard"
-            }
+            val nextMode = (currentKbdMode + 1) % 3
+            setKeyboardMode(nextMode)
         }
 
         kbdOpacityBtn.setOnClickListener {
