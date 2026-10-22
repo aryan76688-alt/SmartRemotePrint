@@ -53,9 +53,11 @@ import android.widget.Toast
 import com.smartremote.print.R
 import com.smartremote.print.network.PrintApiClient
 import com.smartremote.print.security.SecurityVault
+import com.smartremote.print.service.MargCsvSyncManager
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.Executors
 import org.json.JSONObject
@@ -117,6 +119,18 @@ class MainActivity : Activity() {
 
     private lateinit var barPharmaBtn: Button
     private lateinit var barVirtualKbdBtn: Button
+    private lateinit var barCsvSyncBtn: Button
+
+    private lateinit var csvAnalyticsModal: FrameLayout
+    private lateinit var tvCsvStockCount: TextView
+    private lateinit var tvCsvValuation: TextView
+    private lateinit var tvCsvPartyCount: TextView
+    private lateinit var tvCsvTotalOutstanding: TextView
+    private lateinit var tvCsvTotalOverdue: TextView
+    private lateinit var tvCsvSyncStatus: TextView
+    private lateinit var tvCsvLastBackup: TextView
+    private lateinit var btnScanSyncCsv: Button
+    private lateinit var btnCloseCsvModal: Button
     private lateinit var floatingKeyboardContainer: LinearLayout
     private lateinit var kbdHeaderDrag: LinearLayout
     private lateinit var kbdModeToggleBtn: Button
@@ -156,8 +170,12 @@ class MainActivity : Activity() {
                                 val path = Uri.parse(uriString).path
                                 if (path != null) {
                                     val file = File(path)
-                                    if (file.exists() && file.name.endsWith(".pdf", ignoreCase = true)) {
-                                        showPdfPrintPreview(file, file.name)
+                                    if (file.exists()) {
+                                        if (file.name.endsWith(".pdf", ignoreCase = true)) {
+                                            showPdfPrintPreview(file, file.name)
+                                        } else if (file.name.endsWith(".csv", ignoreCase = true)) {
+                                            processIncomingCsv(file)
+                                        }
                                     }
                                 }
                             }
@@ -197,6 +215,7 @@ class MainActivity : Activity() {
         setupControlBar()
         setupPairingModal()
         setupAccountsModal()
+        setupCsvAnalyticsModal()
         setupVirtualKeyboard()
         setupNetworkMonitoring()
         setupBackInvokedCallback()
@@ -311,6 +330,19 @@ class MainActivity : Activity() {
 
         barPharmaBtn = findViewById(R.id.barPharmaBtn)
         barVirtualKbdBtn = findViewById(R.id.barVirtualKbdBtn)
+        barCsvSyncBtn = findViewById(R.id.barCsvSyncBtn)
+
+        csvAnalyticsModal = findViewById(R.id.csvAnalyticsModal)
+        tvCsvStockCount = findViewById(R.id.tvCsvStockCount)
+        tvCsvValuation = findViewById(R.id.tvCsvValuation)
+        tvCsvPartyCount = findViewById(R.id.tvCsvPartyCount)
+        tvCsvTotalOutstanding = findViewById(R.id.tvCsvTotalOutstanding)
+        tvCsvTotalOverdue = findViewById(R.id.tvCsvTotalOverdue)
+        tvCsvSyncStatus = findViewById(R.id.tvCsvSyncStatus)
+        tvCsvLastBackup = findViewById(R.id.tvCsvLastBackup)
+        btnScanSyncCsv = findViewById(R.id.btnScanSyncCsv)
+        btnCloseCsvModal = findViewById(R.id.btnCloseCsvModal)
+
         floatingKeyboardContainer = findViewById(R.id.floatingKeyboardContainer)
         kbdHeaderDrag = findViewById(R.id.kbdHeaderDrag)
         kbdModeToggleBtn = findViewById(R.id.kbdModeToggleBtn)
@@ -527,6 +559,8 @@ class MainActivity : Activity() {
                         Toast.makeText(this@MainActivity, "📄 Saved: $fileName in Download/Marg Cloud", Toast.LENGTH_SHORT).show()
                         if (fileName.endsWith(".pdf", ignoreCase = true) || mimetype?.contains("pdf", ignoreCase = true) == true) {
                             showPdfPrintPreview(targetFile, fileName)
+                        } else if (fileName.endsWith(".csv", ignoreCase = true) || mimetype?.contains("csv", ignoreCase = true) == true) {
+                            processIncomingCsv(targetFile)
                         }
                     }
                 } else {
@@ -598,12 +632,16 @@ class MainActivity : Activity() {
                 val targetFile = File(ensureMargCloudStorageFolder(), fileName)
                 targetFile.writeBytes(bytes)
                 mainHandler.post {
-                    Toast.makeText(this@MainActivity, "📄 PDF Saved: $fileName", Toast.LENGTH_SHORT).show()
-                    showPdfPrintPreview(targetFile, fileName)
+                    if (fileName.endsWith(".csv", ignoreCase = true)) {
+                        processIncomingCsv(targetFile)
+                    } else {
+                        Toast.makeText(this@MainActivity, "📄 PDF Saved: $fileName", Toast.LENGTH_SHORT).show()
+                        showPdfPrintPreview(targetFile, fileName)
+                    }
                 }
             } catch (e: Exception) {
                 mainHandler.post {
-                    Toast.makeText(this@MainActivity, "Failed saving PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Failed saving file: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -638,14 +676,19 @@ class MainActivity : Activity() {
                 try {
                     val cleanBase64 = if (base64Data.contains(",")) base64Data.substringAfter(",") else base64Data
                     val bytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
-                    val safeName = if (!fileName.isNullOrBlank()) fileName else "Marg_Document_${System.currentTimeMillis()}.pdf"
-                    val finalName = if (safeName.endsWith(".pdf", ignoreCase = true)) safeName else "$safeName.pdf"
+                    val isCsv = fileName?.endsWith(".csv", ignoreCase = true) == true
+                    val safeName = if (!fileName.isNullOrBlank()) fileName else (if (isCsv) "Marg_Export_${System.currentTimeMillis()}.csv" else "Marg_Document_${System.currentTimeMillis()}.pdf")
+                    val finalName = if (safeName.endsWith(".pdf", ignoreCase = true) || safeName.endsWith(".csv", ignoreCase = true)) safeName else "$safeName.pdf"
                     val targetFile = File(ensureMargCloudStorageFolder(), finalName)
                     targetFile.writeBytes(bytes)
 
                     mainHandler.post {
-                        Toast.makeText(this@MainActivity, "📄 PDF Saved: $finalName", Toast.LENGTH_SHORT).show()
-                        showPdfPrintPreview(targetFile, finalName)
+                        if (finalName.endsWith(".csv", ignoreCase = true)) {
+                            processIncomingCsv(targetFile)
+                        } else {
+                            Toast.makeText(this@MainActivity, "📄 PDF Saved: $finalName", Toast.LENGTH_SHORT).show()
+                            showPdfPrintPreview(targetFile, finalName)
+                        }
                     }
                 } catch (e: Exception) {
                     mainHandler.post {
@@ -697,6 +740,18 @@ class MainActivity : Activity() {
                     isConnectedToAgent = true
                 }
 
+                if (isConnectedToAgent && MargCsvSyncManager.hasPendingSync(applicationContext)) {
+                    val flushed = MargCsvSyncManager.flushPendingSync(applicationContext, apiClient)
+                    if (flushed) {
+                        mainHandler.post {
+                            Toast.makeText(this@MainActivity, "🔄 Offline Marg data auto-synced to PC!", Toast.LENGTH_SHORT).show()
+                            if (csvAnalyticsModal.visibility == View.VISIBLE) {
+                                refreshCsvAnalyticsUi()
+                            }
+                        }
+                    }
+                }
+
                 mainHandler.post {
                     statusBeacon.text = "Office PC: ONLINE (Brother DCP-T530DW)"
                     statusBeacon.setTextColor(0xFF10B981.toInt())
@@ -736,6 +791,10 @@ class MainActivity : Activity() {
 
         barVirtualKbdBtn.setOnClickListener {
             toggleVirtualKeyboard()
+        }
+
+        barCsvSyncBtn.setOnClickListener {
+            showCsvAnalyticsModal()
         }
 
         barPairBtn.setOnClickListener {
@@ -937,6 +996,91 @@ class MainActivity : Activity() {
         imm?.hideSoftInputFromWindow(acc1UserInput.windowToken, 0)
         accountsModal.visibility = View.GONE
         applyFullScreen()
+    }
+
+    private fun setupCsvAnalyticsModal() {
+        btnScanSyncCsv.setOnClickListener {
+            Toast.makeText(this, "🔄 Scanning Download/Marg Cloud for CSVs...", Toast.LENGTH_SHORT).show()
+            executor.execute {
+                val res = MargCsvSyncManager.scanAndSyncLocalFolder(applicationContext, apiClient, isConnectedToAgent)
+                mainHandler.post {
+                    Toast.makeText(this@MainActivity, res, Toast.LENGTH_LONG).show()
+                    refreshCsvAnalyticsUi()
+                }
+            }
+        }
+
+        btnCloseCsvModal.setOnClickListener {
+            hideCsvAnalyticsModal()
+        }
+    }
+
+    private fun showCsvAnalyticsModal() {
+        hideControlBar()
+        refreshCsvAnalyticsUi()
+        csvAnalyticsModal.visibility = View.VISIBLE
+    }
+
+    private fun hideCsvAnalyticsModal() {
+        csvAnalyticsModal.visibility = View.GONE
+        applyFullScreen()
+    }
+
+    private fun refreshCsvAnalyticsUi() {
+        executor.execute {
+            val summary = MargCsvSyncManager.getOfflineSummary(applicationContext)
+            val backupsDir = MargCsvSyncManager.getBackupsDir()
+            val backups = backupsDir.listFiles { _, name -> name.endsWith(".csv", ignoreCase = true) }
+                ?.sortedByDescending { it.lastModified() }
+            val latestBackupName = backups?.firstOrNull()?.name ?: "None yet"
+
+            mainHandler.post {
+                val stockCount = summary.optInt("stockCount", 0)
+                val partyCount = summary.optInt("partyCount", 0)
+                val outstanding = summary.optDouble("totalOutstanding", 0.0)
+                val overdue = summary.optDouble("totalOverdue", 0.0)
+                val lastUpdated = summary.optString("lastUpdated", "Never")
+
+                tvCsvStockCount.text = "$stockCount items"
+                tvCsvValuation.text = if (stockCount > 0) "Calculated from CSV" else "₹0.00"
+                tvCsvPartyCount.text = "$partyCount chemists"
+                tvCsvTotalOutstanding.text = "₹${String.format(Locale.US, "%,.2f", outstanding)}"
+                tvCsvTotalOverdue.text = "₹${String.format(Locale.US, "%,.2f", overdue)}"
+                tvCsvLastBackup.text = "Latest: $latestBackupName\nFolder: Download/Marg Cloud/Backups/\nUpdated: $lastUpdated"
+
+                val hasPending = MargCsvSyncManager.hasPendingSync(applicationContext)
+                if (isConnectedToAgent) {
+                    if (hasPending) {
+                        tvCsvSyncStatus.text = "⚠️ Offline Changes Queued (Pushing to PC...)"
+                        tvCsvSyncStatus.setTextColor(0xFFF59E0B.toInt())
+                    } else {
+                        tvCsvSyncStatus.text = "🟢 Synced with Windows Agent (Port 8766)"
+                        tvCsvSyncStatus.setTextColor(0xFF10B981.toInt())
+                    }
+                } else {
+                    tvCsvSyncStatus.text = "🟡 Offline Mode (Changes cached locally in tablet)"
+                    tvCsvSyncStatus.setTextColor(0xFFEF4444.toInt())
+                }
+            }
+        }
+    }
+
+    private fun processIncomingCsv(file: File) {
+        Toast.makeText(this, "📊 Analyzing & Backing up: ${file.name}...", Toast.LENGTH_SHORT).show()
+        executor.execute {
+            val result = MargCsvSyncManager.processDownloadedCsv(
+                context = applicationContext,
+                csvFile = file,
+                apiClient = apiClient,
+                isOnline = isConnectedToAgent
+            )
+            mainHandler.post {
+                Toast.makeText(this@MainActivity, result.summaryMessage, Toast.LENGTH_LONG).show()
+                if (csvAnalyticsModal.visibility == View.VISIBLE) {
+                    refreshCsvAnalyticsUi()
+                }
+            }
+        }
     }
 
     private fun copyToClipboard(label: String, text: String) {
@@ -1267,6 +1411,11 @@ class MainActivity : Activity() {
             return // Ignore bounce/repeat events within 250ms
         }
         lastBackActionTime = now
+
+        if (csvAnalyticsModal.visibility == View.VISIBLE) {
+            hideCsvAnalyticsModal()
+            return
+        }
 
         if (accountsModal.visibility == View.VISIBLE) {
             hideAccountsModal()

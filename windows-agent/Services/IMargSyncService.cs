@@ -9,4 +9,6 @@ public interface IMargSyncService
     IReadOnlyList<PartyOutstanding> GetOutstandings(string? search = null, bool overdueOnly = false, int limit = 100);
     Task IngestPayloadAsync(SyncPushPayload payload);
     Task TriggerSyncAsync();
+    CsvAnalyticsSummary GetAnalyticsSummary();
+    IReadOnlyList<BackupFileInfo> GetBackupFiles();
 }

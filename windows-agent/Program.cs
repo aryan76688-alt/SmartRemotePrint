@@ -297,6 +297,23 @@ app.MapPost("/api/v1/sync/refresh", async (IMargSyncService sync) =>
     });
 });
 
+// 7f. Get CSV Analytics & Inventory/Debt Valuation
+app.MapGet("/api/v1/sync/analysis", (IMargSyncService sync) =>
+{
+    return Results.Ok(sync.GetAnalyticsSummary());
+});
+
+// 7g. List Saved Non-Destructive Backup Files
+app.MapGet("/api/v1/sync/backups", (IMargSyncService sync) =>
+{
+    var backups = sync.GetBackupFiles();
+    return Results.Ok(new
+    {
+        count = backups.Count,
+        backups = backups
+    });
+});
+
 Console.WriteLine("===================================================================");
 Console.WriteLine(" SMART REMOTE PRINT AGENT - WINDOWS 10 SPOOLER SERVICE");
 Console.WriteLine(" Dedicated Port: 8766 (C:\\OfficePrint on 8765 preserved)");

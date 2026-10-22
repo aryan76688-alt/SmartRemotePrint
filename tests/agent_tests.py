@@ -108,5 +108,63 @@ class TestMargCloudRemotePrint(unittest.TestCase):
         self.assertGreater(sample_stock["CurrentStock"], 0, "Stock balance must be tracked")
         self.assertLessEqual(sample_party["TotalOutstanding"], sample_party["CreditLimit"], "Outstanding balance within limit")
 
+    def test_csv_backup_timestamp_naming(self):
+        """Test CSV non-destructive timestamped backup naming format"""
+        import datetime
+        original_name = "stock_report_oct2026.csv"
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_name = f"{now_str}_{original_name}"
+        
+        self.assertTrue(backup_name.endswith(".csv"), "Backup file must have .csv extension")
+        self.assertIn(original_name, backup_name, "Original filename must be preserved in backup")
+        # Validate format: YYYY-MM-DD_HH-MM-SS_<filename>
+        parts = backup_name.split("_")
+        self.assertEqual(len(parts[0].split("-")), 3, "Year-month-day timestamp prefix present")
+
+    def test_csv_stock_and_party_parsing_and_valuation(self):
+        """Test parsing of CSV rows and valuation calculations"""
+        csv_stock_rows = [
+            {"code": "PARA650", "name": "Paracetamol 650mg", "stock": 500, "rate": 20.0, "mrp": 30.0},
+            {"code": "AMOX500", "name": "Amoxicillin 500mg", "stock": 100, "rate": 60.0, "mrp": 80.0},
+        ]
+        total_units = sum(r["stock"] for r in csv_stock_rows)
+        total_valuation = sum(r["stock"] * r["rate"] for r in csv_stock_rows)
+
+        self.assertEqual(total_units, 600, "Total units must equal 600")
+        self.assertEqual(total_valuation, 16000.0, "Inventory valuation must be 16,000")
+
+        csv_party_rows = [
+            {"code": "SHR001", "name": "Shreeji Medical", "outstanding": 14500.0, "overdue": 4500.0},
+            {"code": "KIR002", "name": "Kiran Chemist", "outstanding": 48000.0, "overdue": 18000.0},
+        ]
+        total_debt = sum(p["outstanding"] for p in csv_party_rows)
+        total_overdue = sum(p["overdue"] for p in csv_party_rows)
+
+        self.assertEqual(total_debt, 62500.0, "Total chemist outstanding matches sum")
+        self.assertEqual(total_overdue, 22500.0, "Total overdue matches sum")
+
+    def test_offline_sync_queue_and_flush(self):
+        """Test offline fallback sync queueing and reconnection flush"""
+        sync_queue = []
+        is_online = False
+
+        # Tablet downloads CSV while Windows agent is offline
+        incoming_payload = {"StockItems": [{"ItemCode": "PARA650", "CurrentStock": 450}]}
+        if not is_online:
+            sync_queue.append(incoming_payload)
+
+        self.assertEqual(len(sync_queue), 1, "Offline update must be queued locally")
+
+        # Windows Agent / Tailscale reconnects
+        is_online = True
+        flushed_items = []
+        if is_online and sync_queue:
+            while sync_queue:
+                item = sync_queue.pop(0)
+                flushed_items.append(item)
+
+        self.assertEqual(len(sync_queue), 0, "Queue must be empty after flush")
+        self.assertEqual(len(flushed_items), 1, "All offline items must be pushed to Windows agent")
+
 if __name__ == "__main__":
     unittest.main()

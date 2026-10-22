@@ -102,6 +102,10 @@ $margSyncDir = "C:\SmartRemotePrint\MargSync"
 if (-not (Test-Path $margSyncDir)) {
     New-Item -ItemType Directory -Path $margSyncDir -Force | Out-Null
 }
+$margBackupDir = Join-Path $margSyncDir "Backup"
+if (-not (Test-Path $margBackupDir)) {
+    New-Item -ItemType Directory -Path $margBackupDir -Force | Out-Null
+}
 $stockSample = Join-Path $margSyncDir "stock_sample.csv"
 if (-not (Test-Path $stockSample)) {
     @"

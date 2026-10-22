@@ -184,4 +184,39 @@ class PrintApiClient(private val vault: SecurityVault) {
         val hash = digest.digest(bytes)
         return hash.joinToString("") { "%02x".format(it) }
     }
+
+    fun pushSyncData(payloadJson: String): Boolean {
+        return try {
+            val url = URL("${baseUrl()}/sync/push")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 6000
+            conn.readTimeout = 15000
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            val token = vault.getAuthToken()
+            if (!token.isNullOrEmpty()) {
+                conn.setRequestProperty("Authorization", "Bearer $token")
+            }
+            conn.doOutput = true
+            conn.outputStream.use { it.write(payloadJson.toByteArray(Charsets.UTF_8)) }
+            conn.responseCode in 200..299
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun getSyncStatus(): JSONObject? {
+        return try {
+            val url = URL("${baseUrl()}/sync/status")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 4000
+            conn.readTimeout = 4000
+            conn.requestMethod = "GET"
+            if (conn.responseCode == 200) {
+                JSONObject(conn.inputStream.bufferedReader().readText())
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

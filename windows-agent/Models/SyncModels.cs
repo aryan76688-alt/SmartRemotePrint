@@ -41,3 +41,23 @@ public record SyncPushPayload(
     List<StockItem>? StockItems,
     List<PartyOutstanding>? Parties
 );
+
+public record CsvAnalyticsSummary(
+    int TotalStockItems,
+    int TotalStockUnits,
+    decimal TotalInventoryValuation,
+    int TotalParties,
+    decimal TotalOutstandingAmount,
+    decimal TotalOverdueAmount,
+    int TotalBackupFiles,
+    string? LatestBackupFile,
+    DateTime? LastSyncUtc,
+    string BackupFolder
+);
+
+public record BackupFileInfo(
+    string FileName,
+    long SizeBytes,
+    DateTime CreatedUtc,
+    string RelativePath
+);

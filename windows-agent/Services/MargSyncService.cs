@@ -17,7 +17,9 @@ public class MargSyncService : IMargSyncService, IDisposable
 {
     private readonly ILogger<MargSyncService> _logger;
     private readonly string _watchFolder;
+    private readonly string _backupFolder;
     private FileSystemWatcher? _watcher;
+    private FileSystemWatcher? _downloadsWatcher;
     private readonly ConcurrentDictionary<string, StockItem> _stockMap = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, PartyOutstanding> _partyMap = new(StringComparer.OrdinalIgnoreCase);
     private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
@@ -44,14 +46,21 @@ public class MargSyncService : IMargSyncService, IDisposable
             _watchFolder = Path.Combine(AppContext.BaseDirectory, "MargSync");
         }
 
+        _backupFolder = Path.Combine(_watchFolder, "Backup");
+
         try
         {
             if (!Directory.Exists(_watchFolder))
             {
                 Directory.CreateDirectory(_watchFolder);
             }
+            if (!Directory.Exists(_backupFolder))
+            {
+                Directory.CreateDirectory(_backupFolder);
+            }
             EnsureSampleFiles();
             InitializeWatcher();
+            InitializeDownloadsWatcher();
             // Initial scan in background
             Task.Run(TriggerSyncAsync);
         }
@@ -122,6 +131,82 @@ public class MargSyncService : IMargSyncService, IDisposable
                 await Task.Delay(500);
                 await TriggerSyncAsync();
             });
+        }
+    }
+
+    private void InitializeDownloadsWatcher()
+    {
+        try
+        {
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var downloadsPath = Path.Combine(userProfile, "Downloads");
+            if (Directory.Exists(downloadsPath))
+            {
+                _downloadsWatcher = new FileSystemWatcher(downloadsPath)
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                    Filter = "*.csv",
+                    EnableRaisingEvents = true
+                };
+
+                _downloadsWatcher.Created += OnDownloadFileDetected;
+                _downloadsWatcher.Changed += OnDownloadFileDetected;
+                _logger.LogInformation("Watching user Downloads folder for Marg CSVs: {Path}", downloadsPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not start FileSystemWatcher on user Downloads");
+        }
+    }
+
+    private void OnDownloadFileDetected(object sender, FileSystemEventArgs e)
+    {
+        var name = Path.GetFileName(e.FullPath).ToLowerInvariant();
+        if (name.Contains("marg") || name.Contains("stock") || name.Contains("outstanding") || name.Contains("ledger") || name.Contains("item") || name.Contains("party"))
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1000); // Allow download completion
+                await IngestExternalCsvFileAsync(e.FullPath);
+            });
+        }
+    }
+
+    public async Task IngestExternalCsvFileAsync(string filePath)
+    {
+        try
+        {
+            if (!File.Exists(filePath)) return;
+            CreateTimestampedBackup(filePath);
+            await ProcessFileAsync(filePath);
+            _lastSyncUtc = DateTime.UtcNow;
+            _lastSyncError = null;
+            await NotifyWebhookAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing external CSV from {Path}", filePath);
+        }
+    }
+
+    public string CreateTimestampedBackup(string sourceFilePath)
+    {
+        try
+        {
+            if (!Directory.Exists(_backupFolder)) Directory.CreateDirectory(_backupFolder);
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
+            var originalName = Path.GetFileName(sourceFilePath);
+            var backupName = $"{timestamp}_{originalName}";
+            var targetPath = Path.Combine(_backupFolder, backupName);
+            File.Copy(sourceFilePath, targetPath, overwrite: true);
+            _logger.LogInformation("Saved non-destructive CSV backup: {Backup}", backupName);
+            return targetPath;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to create timestamped backup of {File}", sourceFilePath);
+            return sourceFilePath;
         }
     }
 
@@ -212,6 +297,15 @@ public class MargSyncService : IMargSyncService, IDisposable
         _lastSyncUtc = now;
         _lastSyncError = null;
 
+        try
+        {
+            if (!Directory.Exists(_backupFolder)) Directory.CreateDirectory(_backupFolder);
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
+            var backupPath = Path.Combine(_backupFolder, $"{timestamp}_tablet_push.json");
+            File.WriteAllText(backupPath, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { }
+
         _ = NotifyWebhookAsync();
         return Task.CompletedTask;
     }
@@ -254,6 +348,7 @@ public class MargSyncService : IMargSyncService, IDisposable
 
     private async Task ProcessFileAsync(string filePath)
     {
+        CreateTimestampedBackup(filePath);
         string? text = null;
         for (int retry = 0; retry < 3; retry++)
         {
@@ -479,9 +574,57 @@ public class MargSyncService : IMargSyncService, IDisposable
         }
     }
 
+    public CsvAnalyticsSummary GetAnalyticsSummary()
+    {
+        int totalUnits = _stockMap.Values.Sum(s => s.CurrentStock);
+        decimal valuation = _stockMap.Values.Sum(s => s.CurrentStock * (s.Rate > 0 ? s.Rate : s.Mrp));
+        decimal totalOutstanding = _partyMap.Values.Sum(p => p.TotalOutstanding);
+        decimal totalOverdue = _partyMap.Values.Sum(p => p.OverdueAmount);
+
+        var backups = GetBackupFiles();
+        var latestBackup = backups.FirstOrDefault()?.FileName;
+
+        return new CsvAnalyticsSummary(
+            TotalStockItems: _stockMap.Count,
+            TotalStockUnits: totalUnits,
+            TotalInventoryValuation: valuation,
+            TotalParties: _partyMap.Count,
+            TotalOutstandingAmount: totalOutstanding,
+            TotalOverdueAmount: totalOverdue,
+            TotalBackupFiles: backups.Count,
+            LatestBackupFile: latestBackup,
+            LastSyncUtc: _lastSyncUtc,
+            BackupFolder: _backupFolder
+        );
+    }
+
+    public IReadOnlyList<BackupFileInfo> GetBackupFiles()
+    {
+        try
+        {
+            if (!Directory.Exists(_backupFolder)) return Array.Empty<BackupFileInfo>();
+
+            var dir = new DirectoryInfo(_backupFolder);
+            return dir.GetFiles("*.*")
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .Select(f => new BackupFileInfo(
+                    FileName: f.Name,
+                    SizeBytes: f.Length,
+                    CreatedUtc: f.CreationTimeUtc,
+                    RelativePath: Path.Combine("MargSync", "Backup", f.Name)
+                ))
+                .ToList();
+        }
+        catch
+        {
+            return Array.Empty<BackupFileInfo>();
+        }
+    }
+
     public void Dispose()
     {
         _watcher?.Dispose();
+        _downloadsWatcher?.Dispose();
         _httpClient.Dispose();
     }
 }
