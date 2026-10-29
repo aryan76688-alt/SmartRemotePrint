@@ -81,6 +81,8 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
     private lateinit var floatingPill: LinearLayout
+    private lateinit var floatingPillText: TextView
+    private var hasShownInitialConnectToast = false
     private lateinit var controlBar: LinearLayout
     private lateinit var barUrlInput: EditText
     private lateinit var barGoBtn: Button
@@ -203,7 +205,8 @@ class MainActivity : Activity() {
     private val heartbeatRunnable = object : Runnable {
         override fun run() {
             checkAndAutoConnect()
-            mainHandler.postDelayed(this, 10000) // Poll every 10 seconds for instant auto-connect
+            val interval = if (isConnectedToAgent) 8000L else 4000L // 4s fast retry until connected, 8s live telemetry
+            mainHandler.postDelayed(this, interval)
         }
     }
 
@@ -296,6 +299,7 @@ class MainActivity : Activity() {
         webView = findViewById(R.id.webView)
         progressBar = findViewById(R.id.progressBar)
         floatingPill = findViewById(R.id.floatingPill)
+        floatingPillText = findViewById(R.id.floatingPillText)
         controlBar = findViewById(R.id.controlBar)
 
         barUrlInput = findViewById(R.id.barUrlInput)
@@ -792,8 +796,23 @@ class MainActivity : Activity() {
                 val pendingPrints = OfflinePrintQueueManager.getPendingCount(applicationContext)
                 val queuePrefix = if (pendingPrints > 0) "[$pendingPrints Queued] " else ""
 
+                if (isConnectedToAgent && !hasShownInitialConnectToast) {
+                    hasShownInitialConnectToast = true
+                    mainHandler.post {
+                        Toast.makeText(this@MainActivity, "🟢 Auto-connected to Office PC (Brother DCP-T530DW)", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
                 mainHandler.post {
                     if (telem != null) {
+                        floatingPillText.text = when {
+                            telem.paperStatus == "OutOfPaper" -> "🔴 Paper Out | 🖨️ Menu"
+                            telem.paperStatus == "PaperJam" -> "🔴 Paper Jam | 🖨️ Menu"
+                            telem.coverStatus == "DoorOpen" -> "🟡 Cover Open | 🖨️ Menu"
+                            telem.state == "Printing" -> "🔵 Printing | 🖨️ Menu"
+                            else -> "🟢 PC Ready | 🖨️ Menu"
+                        }
+
                         when {
                             telem.paperStatus == "OutOfPaper" -> {
                                 statusBeacon.text = "${queuePrefix}🔴 Brother DCP-T530DW: OUT OF PAPER! (Please load paper)"
@@ -829,6 +848,7 @@ class MainActivity : Activity() {
                             }
                         }
                     } else {
+                        floatingPillText.text = "🟢 PC Connected | 🖨️ Menu"
                         statusBeacon.text = "${queuePrefix}Office PC: ONLINE (Brother DCP-T530DW: Ready)"
                         statusBeacon.setTextColor(0xFF10B981.toInt())
                     }
@@ -839,6 +859,7 @@ class MainActivity : Activity() {
                 val pendingPrints = OfflinePrintQueueManager.getPendingCount(applicationContext)
                 val queuePrefix = if (pendingPrints > 0) "[$pendingPrints Queued] " else ""
                 mainHandler.post {
+                    floatingPillText.text = "🟡 Connecting PC | 🖨️ Menu"
                     statusBeacon.text = "${queuePrefix}Office PC: OFFLINE (${vault.serverHost}:8766) - Auto-connecting..."
                     statusBeacon.setTextColor(0xFFF59E0B.toInt())
                 }
@@ -995,14 +1016,16 @@ class MainActivity : Activity() {
             Toast.makeText(this, "Connecting to Windows Print Agent...", Toast.LENGTH_SHORT).show()
 
             executor.execute {
+                val deviceName = if (BuildConfig.DEVICE_TYPE == "mobile") "Android Phone (${Build.MODEL})" else "Lenovo Tab P12"
                 val (success, msg) = apiClient.pairWithPin(
                     pin = pin,
                     deviceId = UUID.randomUUID().toString(),
-                    deviceName = "Lenovo Tab P12"
+                    deviceName = deviceName
                 )
 
                 mainHandler.post {
                     if (success) {
+                        hasShownInitialConnectToast = true
                         Toast.makeText(this, "✓ Connected to Office PC!", Toast.LENGTH_LONG).show()
                         pairingModal.visibility = View.GONE
                         checkAndAutoConnect()

@@ -39,40 +39,60 @@ class PrintApiClient(private val vault: SecurityVault) {
     data class SpoolResult(val jobId: String, val state: String, val errorMessage: String?)
 
     fun checkHealth(): HealthInfo? {
-        return try {
-            val url = URL("${baseUrl()}/health")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 3000
-            conn.readTimeout = 3000
-            conn.requestMethod = "GET"
+        val discovery = autoDiscoverAndConnect()
+        return discovery?.second
+    }
 
-            if (conn.responseCode == 200) {
-                val json = JSONObject(conn.inputStream.bufferedReader().readText())
-                val telemObj = json.optJSONObject("printerTelemetry")
-                val telemetry = if (telemObj != null) {
-                    PrinterTelemetry(
-                        printerName = telemObj.optString("printerName", json.optString("defaultPrinter", "Brother DCP-T530DW Printer")),
-                        isOnline = telemObj.optBoolean("isOnline", true),
-                        state = telemObj.optString("state", "Ready"),
-                        stateDetails = telemObj.optString("stateDetails", "Ready"),
-                        paperStatus = telemObj.optString("paperStatus", "OK"),
-                        inkStatus = telemObj.optString("inkStatus", "OK"),
-                        coverStatus = telemObj.optString("coverStatus", "Closed"),
-                        queuedJobsCount = telemObj.optInt("queuedJobsCount", 0)
+    fun autoDiscoverAndConnect(): Pair<String, HealthInfo>? {
+        val candidates = linkedSetOf(
+            vault.serverHost.trim(),
+            "100.111.100.122",
+            "desktop-00ctdtl.tailfc14cd.ts.net",
+            "127.0.0.1"
+        )
+
+        for (host in candidates) {
+            if (host.isBlank()) continue
+            try {
+                val url = URL("http://$host:${vault.serverPort}/api/v1/health")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 2000
+                conn.readTimeout = 2000
+                conn.requestMethod = "GET"
+
+                if (conn.responseCode == 200) {
+                    val json = JSONObject(conn.inputStream.bufferedReader().readText())
+                    val telemObj = json.optJSONObject("printerTelemetry")
+                    val telemetry = if (telemObj != null) {
+                        PrinterTelemetry(
+                            printerName = telemObj.optString("printerName", json.optString("defaultPrinter", "Brother DCP-T530DW Printer")),
+                            isOnline = telemObj.optBoolean("isOnline", true),
+                            state = telemObj.optString("state", "Ready"),
+                            stateDetails = telemObj.optString("stateDetails", "Ready"),
+                            paperStatus = telemObj.optString("paperStatus", "OK"),
+                            inkStatus = telemObj.optString("inkStatus", "OK"),
+                            coverStatus = telemObj.optString("coverStatus", "Closed"),
+                            queuedJobsCount = telemObj.optInt("queuedJobsCount", 0)
+                        )
+                    } else null
+
+                    val health = HealthInfo(
+                        status = json.getString("status"),
+                        machineName = json.getString("machineName"),
+                        defaultPrinter = json.optString("defaultPrinter", "Brother DCP-T530DW Printer"),
+                        uptimeSeconds = json.optDouble("uptimeSeconds", 0.0),
+                        printerTelemetry = telemetry
                     )
-                } else null
 
-                HealthInfo(
-                    status = json.getString("status"),
-                    machineName = json.getString("machineName"),
-                    defaultPrinter = json.optString("defaultPrinter", "Brother DCP-T530DW Printer"),
-                    uptimeSeconds = json.optDouble("uptimeSeconds", 0.0),
-                    printerTelemetry = telemetry
-                )
-            } else null
-        } catch (e: Exception) {
-            null
+                    if (vault.serverHost != host) {
+                        vault.serverHost = host
+                    }
+                    return Pair(host, health)
+                }
+            } catch (ignored: Exception) {
+            }
         }
+        return null
     }
 
     fun getPrinterTelemetry(): PrinterTelemetry? {

@@ -43,6 +43,7 @@
         android:paddingBottom="8dp">
 
         <TextView
+            android:id="@+id/floatingPillText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🖨️ Print &amp; Menu"
@@ -183,7 +184,7 @@
                     android:layout_height="42dp"
                     android:layout_marginStart="8dp"
                     android:background="@drawable/bg_button_secondary"
-                    android:text="⚙ Pair PC"
+                    android:text="⚙ Connect PC"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF" />
             </LinearLayout>
