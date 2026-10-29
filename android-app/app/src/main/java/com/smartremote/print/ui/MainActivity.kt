@@ -147,6 +147,10 @@ class MainActivity : Activity() {
     private var isKbdTransparent = false
     private var kbdScale = 1.0f
     private var lastShortcutToastTime = 0L
+    private var lastHardwareKeyTime = 0L
+    private var lastHardwareKeyCode = 0
+    private var lastVirtualKeyTime = 0L
+    private var lastVirtualKeyCode = 0
 
     private var isCtrlActive = false
     private var isAltActive = false
@@ -472,6 +476,22 @@ class MainActivity : Activity() {
                                                 reader.readAsDataURL(blob);
                                             }).catch(function(err){});
                                     }
+                                }, true);
+                            }
+                            // Hardware & virtual keyboard bounce shield (capture phase debounce)
+                            if (!window._smartKeyDebounceHooked) {
+                                window._smartKeyDebounceHooked = true;
+                                var lastKeyTime = 0;
+                                var lastKeyCode = null;
+                                window.addEventListener('keydown', function(e) {
+                                    var now = Date.now();
+                                    if (e.keyCode === lastKeyCode && (now - lastKeyTime) < 70) {
+                                        e.preventDefault();
+                                        e.stopImmediatePropagation();
+                                        return false;
+                                    }
+                                    lastKeyTime = now;
+                                    lastKeyCode = e.keyCode;
                                 }, true);
                             }
                         } catch(e) {}
@@ -1334,6 +1354,16 @@ class MainActivity : Activity() {
         val isCtrl = event.isCtrlPressed
         val action = event.action
 
+        // Hardware bounce filter: drop exact same key within 70ms on ACTION_DOWN
+        val now = android.os.SystemClock.uptimeMillis()
+        if (action == KeyEvent.ACTION_DOWN) {
+            if (keyCode == lastHardwareKeyCode && (now - lastHardwareKeyTime) < 70) {
+                return true // Consume duplicate hardware bounce
+            }
+            lastHardwareKeyTime = now
+            lastHardwareKeyCode = keyCode
+        }
+
         // 1. Lenovo Tab P12 Custom Physical Keyboard Mappings (No F1-F12 keys on physical accessory)
         if (isAlt || isCtrl) {
             val mapped = when (keyCode) {
@@ -1759,6 +1789,13 @@ class MainActivity : Activity() {
     }
 
     private fun sendKeyToWeb(key: String, code: String, keyCode: Int, textChar: String? = null) {
+        val now = android.os.SystemClock.uptimeMillis()
+        if (keyCode == lastVirtualKeyCode && (now - lastVirtualKeyTime) < 90) {
+            return // Debounce rapid click/bounce within 90ms
+        }
+        lastVirtualKeyTime = now
+        lastVirtualKeyCode = keyCode
+
         val ctrl = isCtrlActive
         val alt = isAltActive
         val shift = isShiftActive || isCapsActive
@@ -1784,17 +1821,6 @@ class MainActivity : Activity() {
                         bubbles: true,
                         cancelable: true
                     });
-                    var evtPress = new KeyboardEvent('keypress', {
-                        key: '$finalKey',
-                        code: '$code',
-                        keyCode: $keyCode,
-                        which: $keyCode,
-                        ctrlKey: $ctrl,
-                        altKey: $alt,
-                        shiftKey: $shift,
-                        bubbles: true,
-                        cancelable: true
-                    });
                     var evtUp = new KeyboardEvent('keyup', {
                         key: '$finalKey',
                         code: '$code',
@@ -1808,7 +1834,6 @@ class MainActivity : Activity() {
                     });
 
                     target.dispatchEvent(evtDown);
-                    target.dispatchEvent(evtPress);
                     target.dispatchEvent(evtUp);
 
                     // If typing into an input/textarea element
@@ -1820,7 +1845,6 @@ class MainActivity : Activity() {
                         target.value = val.substring(0, start) + ch + val.substring(end);
                         target.selectionStart = target.selectionEnd = start + ch.length;
                         target.dispatchEvent(new Event('input', { bubbles: true }));
-                        target.dispatchEvent(new Event('change', { bubbles: true }));
                     } else if ('$key' === 'Backspace' && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
                         var start = target.selectionStart || 0;
                         var end = target.selectionEnd || 0;
@@ -1829,23 +1853,12 @@ class MainActivity : Activity() {
                             target.value = val.substring(0, start - 1) + val.substring(end);
                             target.selectionStart = target.selectionEnd = start - 1;
                             target.dispatchEvent(new Event('input', { bubbles: true }));
-                            target.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     }
                 } catch(e) {}
             })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
-
-        // Native Android key event dispatch
-        val androidCode = mapToAndroidKeyCode(keyCode)
-        if (androidCode != KeyEvent.KEYCODE_UNKNOWN) {
-            val meta = (if (ctrl) KeyEvent.META_CTRL_ON else 0) or
-                       (if (alt) KeyEvent.META_ALT_ON else 0) or
-                       (if (shift) KeyEvent.META_SHIFT_ON else 0)
-            webView.dispatchKeyEvent(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, androidCode, 0, meta))
-            webView.dispatchKeyEvent(KeyEvent(0, 0, KeyEvent.ACTION_UP, androidCode, 0, meta))
-        }
 
         // Auto release single-shot modifiers
         if (isShiftActive) {
@@ -1859,40 +1872,6 @@ class MainActivity : Activity() {
         if (isCtrlActive) {
             isCtrlActive = false
             updateModifierButtonStyles()
-        }
-    }
-
-    private fun mapToAndroidKeyCode(keyCode: Int): Int {
-        return when (keyCode) {
-            27 -> KeyEvent.KEYCODE_ESCAPE
-            13 -> KeyEvent.KEYCODE_ENTER
-            9 -> KeyEvent.KEYCODE_TAB
-            8 -> KeyEvent.KEYCODE_DEL
-            46 -> KeyEvent.KEYCODE_FORWARD_DEL
-            38 -> KeyEvent.KEYCODE_DPAD_UP
-            40 -> KeyEvent.KEYCODE_DPAD_DOWN
-            37 -> KeyEvent.KEYCODE_DPAD_LEFT
-            39 -> KeyEvent.KEYCODE_DPAD_RIGHT
-            32 -> KeyEvent.KEYCODE_SPACE
-            33 -> KeyEvent.KEYCODE_PAGE_UP
-            34 -> KeyEvent.KEYCODE_PAGE_DOWN
-            36 -> KeyEvent.KEYCODE_MOVE_HOME
-            35 -> KeyEvent.KEYCODE_MOVE_END
-            112 -> KeyEvent.KEYCODE_F1
-            113 -> KeyEvent.KEYCODE_F2
-            114 -> KeyEvent.KEYCODE_F3
-            115 -> KeyEvent.KEYCODE_F4
-            116 -> KeyEvent.KEYCODE_F5
-            117 -> KeyEvent.KEYCODE_F6
-            118 -> KeyEvent.KEYCODE_F7
-            119 -> KeyEvent.KEYCODE_F8
-            120 -> KeyEvent.KEYCODE_F9
-            121 -> KeyEvent.KEYCODE_F10
-            122 -> KeyEvent.KEYCODE_F11
-            123 -> KeyEvent.KEYCODE_F12
-            in 48..57 -> KeyEvent.KEYCODE_0 + (keyCode - 48)
-            in 65..90 -> KeyEvent.KEYCODE_A + (keyCode - 65)
-            else -> KeyEvent.KEYCODE_UNKNOWN
         }
     }
 }
