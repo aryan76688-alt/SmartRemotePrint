@@ -61,3 +61,24 @@ public record PrintJobStatus(
     [property: JsonPropertyName("submittedAtUtc")] DateTime SubmittedAtUtc,
     [property: JsonPropertyName("completedAtUtc")] DateTime? CompletedAtUtc
 );
+
+public record ActivePrinterConfig(
+    [property: JsonPropertyName("activePrinter")] string ActivePrinter,
+    [property: JsonPropertyName("fallbackPrinter")] string FallbackPrinter = "Brother DCP-T530DW Printer",
+    [property: JsonPropertyName("fitToPage")] bool FitToPage = true,
+    [property: JsonPropertyName("copies")] int Copies = 1,
+    [property: JsonPropertyName("lastChangedUtc")] DateTime? LastChangedUtc = null
+);
+
+public record SelectPrinterRequest(
+    [property: JsonPropertyName("printerName")] string PrinterName,
+    [property: JsonPropertyName("setAsWindowsDefault")] bool SetAsWindowsDefault = false
+);
+
+public record DirectPrintFileRequest(
+    [property: JsonPropertyName("filePath")] string? FilePath,
+    [property: JsonPropertyName("printerName")] string? PrinterName,
+    [property: JsonPropertyName("documentName")] string? DocumentName,
+    [property: JsonPropertyName("copies")] int Copies = 1
+);
+

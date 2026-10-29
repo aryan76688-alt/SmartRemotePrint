@@ -1,6 +1,8 @@
 # .NET build artifacts
 windows-agent/bin/
 windows-agent/obj/
+windows-desktop/bin/
+windows-desktop/obj/
 *.user
 *.suo
 *.userosscache

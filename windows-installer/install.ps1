@@ -87,6 +87,55 @@ if (Test-Path $sourceExe) {
     Exit 1
 }
 
+# Deploy Desktop Quick Printer & Switcher GUI (.exe)
+$sourceDesktop = Join-Path $PSScriptRoot "SmartRemotePrintDesktop.exe"
+if (-not (Test-Path $sourceDesktop)) {
+    $sourceDesktop = Join-Path $PSScriptRoot "..\windows-desktop\bin\publish\SmartRemotePrintDesktop.exe"
+}
+if (Test-Path $sourceDesktop) {
+    $targetDesktop = Join-Path $InstallPath "SmartRemotePrintDesktop.exe"
+    Copy-Item -Path $sourceDesktop -Destination $targetDesktop -Force
+    Write-Host "  -> Installed SmartRemotePrintDesktop.exe (Print Anything & Switcher GUI)." -ForegroundColor Green
+
+    # Create Desktop Shortcut for User
+    try {
+        $desktopPath = [Environment]::GetFolderPath("Desktop")
+        $wshShell = New-Object -ComObject WScript.Shell
+        $lnkPath = Join-Path $desktopPath "Smart Remote Print (Print Anything).lnk"
+        $shortcut = $wshShell.CreateShortcut($lnkPath)
+        $shortcut.TargetPath = $targetDesktop
+        $shortcut.Description = "Print anything to active/default printer & switch printers anytime"
+        $shortcut.WorkingDirectory = $InstallPath
+        $shortcut.Save()
+        Write-Host "  -> Created Desktop Shortcut: 'Smart Remote Print (Print Anything)'" -ForegroundColor Green
+    } catch { }
+
+    # Register Context Menu for 1-Click Right-Click File Printing
+    try {
+        $shellCmd = "`"$targetDesktop`" `"%1`""
+        foreach ($ext in @("SystemFileAssociations\.pdf", "SystemFileAssociations\.txt", "SystemFileAssociations\.csv")) {
+            New-Item -Path "Registry::HKEY_CLASSES_ROOT\$ext\shell\SmartRemotePrint" -Value "🖨️ Print with Smart Remote Print" -Force -ErrorAction SilentlyContinue | Out-Null
+            New-Item -Path "Registry::HKEY_CLASSES_ROOT\$ext\shell\SmartRemotePrint\command" -Value $shellCmd -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+        Write-Host "  -> Registered Right-Click 'Print with Smart Remote Print' for PDF, TXT, CSV files." -ForegroundColor Green
+    } catch { }
+}
+
+# Deploy Default Printer Configuration
+$cfgPath = Join-Path $InstallPath "printer_config.json"
+if (-not (Test-Path $cfgPath)) {
+    @"
+{
+  "activePrinter": "SYSTEM_DEFAULT",
+  "fallbackPrinter": "Brother DCP-T530DW Printer",
+  "fitToPage": true,
+  "copies": 1,
+  "lastChangedUtc": "$((Get-Date).ToUniversalTime().ToString('o'))"
+}
+"@ | Out-File -FilePath $cfgPath -Encoding utf8
+    Write-Host "  -> Initialized dynamic printer configuration (Auto Windows Default)." -ForegroundColor Green
+}
+
 # Deploy SumatraPDF Rasterizer
 $sourceSumatra = Join-Path $PSScriptRoot "SumatraPDF.exe"
 if (-not (Test-Path $sourceSumatra)) {
@@ -199,9 +248,11 @@ try {
     Write-Host " SUCCESS: SMART REMOTE PRINT SERVICE IS RUNNING 24/7 ON WINDOWS!" -ForegroundColor Green
     Write-Host " Pairing PIN: [ 260890 ] (Ready for Lenovo Tab P12)" -ForegroundColor Cyan
     Write-Host " Health Status: $($health.status) | Port: 8766 | Machine: $($env:COMPUTERNAME)" -ForegroundColor White
-    Write-Host " Default Queue: $($health.defaultPrinter)" -ForegroundColor White
+    Write-Host " Active Printer: $($health.defaultPrinter) [Auto-Follow Windows Default or Custom]" -ForegroundColor White
+    Write-Host " Desktop App: Smart Remote Print (Print Anything) installed on your Desktop!" -ForegroundColor Yellow
+    Write-Host " Switch Printer: Double-click desktop icon to change active printer anytime!" -ForegroundColor Yellow
     Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync (Direct Stock & Outstandings)" -ForegroundColor Cyan
-    Write-Host " Pharma Keys: MargPharmaKeys.bat (Windows 10/11 Alt+2=Date, Alt+3=Item, Alt+9=Print, Alt+0=Save)" -ForegroundColor Yellow
+    Write-Host " Pharma Keys: MargPharmaKeys.bat (Windows 10/11 Alt+2=Date, Alt+3=Item, Alt+9=Print, Alt+0=Save)" -ForegroundColor Cyan
     Write-Host " 24/7 Mode: ACTIVE (Printing works even when laptop is turned off)" -ForegroundColor Green
     Write-Host "===================================================================" -ForegroundColor Green
 } catch {
@@ -209,6 +260,8 @@ try {
     Write-Host "===================================================================" -ForegroundColor Green
     Write-Host " SUCCESS: SMART REMOTE PRINT SERVICE IS INSTALLED AND RUNNING!" -ForegroundColor Green
     Write-Host " Pairing PIN: [ 260890 ] (Ready for Lenovo Tab P12)" -ForegroundColor Cyan
+    Write-Host " Desktop App: Smart Remote Print (Print Anything) installed on your Desktop!" -ForegroundColor Yellow
+    Write-Host " Switch Printer: Double-click desktop icon to change active printer anytime!" -ForegroundColor Yellow
     Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync" -ForegroundColor Cyan
     Write-Host " Check Task Manager or services.msc to confirm SmartRemotePrintAgent." -ForegroundColor White
     Write-Host "===================================================================" -ForegroundColor Green

@@ -12,6 +12,9 @@ public interface ISpoolerPrintService
     PrintJobStatus? GetJobStatus(string jobId);
     bool CancelJob(string jobId);
     string ResolvePrinterName(string? requestedName);
+    ActivePrinterConfig GetPrinterConfig();
+    bool SetActivePrinter(string printerName, bool setAsWindowsDefault = false);
+    Task<PrintJobStatus> PrintLocalFileAsync(string filePath, string? printerName = null, int copies = 1, string? documentName = null);
 }
 
 public class SpoolerPrintService : ISpoolerPrintService
@@ -156,6 +159,106 @@ public class SpoolerPrintService : ISpoolerPrintService
         return list;
     }
 
+    private static string GetConfigFilePath()
+    {
+        string[] candidates = {
+            @"C:\Program Files\SmartRemotePrint\printer_config.json",
+            @"C:\SmartRemotePrint\printer_config.json",
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "printer_config.json")
+        };
+
+        foreach (var c in candidates)
+        {
+            if (File.Exists(c)) return c;
+            var dir = Path.GetDirectoryName(c);
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir)) return c;
+        }
+
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "printer_config.json");
+    }
+
+    public ActivePrinterConfig GetPrinterConfig()
+    {
+        try
+        {
+            var path = GetConfigFilePath();
+            if (File.Exists(path))
+            {
+                var json = File.ReadAllText(path);
+                var cfg = System.Text.Json.JsonSerializer.Deserialize<ActivePrinterConfig>(json);
+                if (cfg != null) return cfg;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Failed reading printer_config.json: {Msg}", ex.Message);
+        }
+
+        return new ActivePrinterConfig("SYSTEM_DEFAULT");
+    }
+
+    public bool SetActivePrinter(string printerName, bool setAsWindowsDefault = false)
+    {
+        try
+        {
+            var config = new ActivePrinterConfig(
+                ActivePrinter: string.IsNullOrWhiteSpace(printerName) ? "SYSTEM_DEFAULT" : printerName.Trim(),
+                FallbackPrinter: "Brother DCP-T530DW Printer",
+                FitToPage: true,
+                Copies: 1,
+                LastChangedUtc: DateTime.UtcNow
+            );
+
+            var json = System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+            var primary = GetConfigFilePath();
+            var dir = Path.GetDirectoryName(primary);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                try { Directory.CreateDirectory(dir); } catch { }
+            }
+            File.WriteAllText(primary, json);
+
+            var secondary = @"C:\SmartRemotePrint\printer_config.json";
+            if (Directory.Exists(@"C:\SmartRemotePrint") && !string.Equals(primary, secondary, StringComparison.OrdinalIgnoreCase))
+            {
+                try { File.WriteAllText(secondary, json); } catch { }
+            }
+
+            _logger.LogInformation("Active printer set to: {Printer} (Config path: {Path})", config.ActivePrinter, primary);
+
+            if (setAsWindowsDefault && !string.Equals(config.ActivePrinter, "SYSTEM_DEFAULT", StringComparison.OrdinalIgnoreCase) && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                try
+                {
+                    var clean = config.ActivePrinter.Replace("'", "''");
+                    var psScript = $"(New-Object -ComObject WScript.Network).SetDefaultPrinter('{clean}')";
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = $"-NoProfile -Command \"{psScript}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using var proc = Process.Start(psi);
+                    proc?.WaitForExit(3000);
+                    _logger.LogInformation("Windows default printer updated to: {Printer}", config.ActivePrinter);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Could not set Windows default printer: {Msg}", ex.Message);
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set active printer");
+            return false;
+        }
+    }
+
     public string ResolvePrinterName(string? requestedName)
     {
         var available = GetPrinters();
@@ -164,29 +267,151 @@ public class SpoolerPrintService : ISpoolerPrintService
             return requestedName ?? "Brother DCP-T530DW Printer";
         }
 
-        // 1. Exact match
-        if (!string.IsNullOrWhiteSpace(requestedName))
+        // 1. Explicit request from caller (if not generic "default" or "SYSTEM_DEFAULT")
+        if (!string.IsNullOrWhiteSpace(requestedName) &&
+            !string.Equals(requestedName, "default", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(requestedName, "SYSTEM_DEFAULT", StringComparison.OrdinalIgnoreCase))
         {
             var exact = available.FirstOrDefault(p => string.Equals(p.Name, requestedName, StringComparison.OrdinalIgnoreCase));
             if (exact != null) return exact.Name;
+
+            var partial = available.FirstOrDefault(p => p.Name.Contains(requestedName, StringComparison.OrdinalIgnoreCase));
+            if (partial != null) return partial.Name;
         }
 
-        // 2. Specific Brother T530 match (e.g. "Brother DCP-T530DW series", "Brother DCP-T530DW Printer")
-        var brotherT530 = available.FirstOrDefault(p =>
-            (p.Name.Contains("Brother", StringComparison.OrdinalIgnoreCase) && (p.Name.Contains("T530", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("DCP-T530DW", StringComparison.OrdinalIgnoreCase))) ||
-            (p.DriverName.Contains("Brother", StringComparison.OrdinalIgnoreCase) && (p.DriverName.Contains("T530", StringComparison.OrdinalIgnoreCase) || p.DriverName.Contains("DCP-T530DW", StringComparison.OrdinalIgnoreCase)))
-        );
-        if (brotherT530 != null) return brotherT530.Name;
+        // 2. Check Active Printer Config (Allows user to select any printer via Desktop .exe)
+        var config = GetPrinterConfig();
+        if (!string.IsNullOrWhiteSpace(config.ActivePrinter) &&
+            !string.Equals(config.ActivePrinter, "SYSTEM_DEFAULT", StringComparison.OrdinalIgnoreCase))
+        {
+            var configured = available.FirstOrDefault(p => string.Equals(p.Name, config.ActivePrinter, StringComparison.OrdinalIgnoreCase))
+                ?? available.FirstOrDefault(p => p.Name.Contains(config.ActivePrinter, StringComparison.OrdinalIgnoreCase));
+            if (configured != null) return configured.Name;
+        }
 
-        // 3. Any Brother printer
+        // 3. Dynamic Windows Default Printer (Whenever user changes default printer in Windows)
+        var winDefault = available.FirstOrDefault(p => p.IsDefault);
+        if (winDefault != null) return winDefault.Name;
+
+        // 4. Configured Fallback printer (e.g. Brother DCP-T530DW)
+        if (!string.IsNullOrWhiteSpace(config.FallbackPrinter))
+        {
+            var fallback = available.FirstOrDefault(p => p.Name.Contains(config.FallbackPrinter, StringComparison.OrdinalIgnoreCase));
+            if (fallback != null) return fallback.Name;
+        }
+
+        // 5. Any Brother printer
         var anyBrother = available.FirstOrDefault(p => p.Name.Contains("Brother", StringComparison.OrdinalIgnoreCase));
         if (anyBrother != null) return anyBrother.Name;
 
-        // 4. Default printer
-        var def = available.FirstOrDefault(p => p.IsDefault);
-        if (def != null) return def.Name;
-
+        // 6. First available printer
         return available[0].Name;
+    }
+
+    public async Task<PrintJobStatus> PrintLocalFileAsync(string filePath, string? printerName = null, int copies = 1, string? documentName = null)
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"File not found: {filePath}");
+        }
+
+        var resolvedPrinter = ResolvePrinterName(printerName);
+        var docName = documentName ?? Path.GetFileName(filePath);
+        var jobId = Guid.NewGuid().ToString("D");
+
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        if (ext == ".pdf")
+        {
+            await using var stream = File.OpenRead(filePath);
+            var metadata = new PrintJobSubmission(
+                JobId: jobId,
+                ClientTimestamp: DateTime.UtcNow,
+                PrinterName: resolvedPrinter,
+                DocumentName: docName,
+                Copies: Math.Max(1, copies)
+            );
+            return await EnqueueJobAsync(metadata, stream);
+        }
+
+        // For non-PDF files (.txt, .csv, images), spool using Windows native print mechanisms
+        var status = new PrintJobStatus(
+            JobId: jobId,
+            WindowsSpoolerJobId: Random.Shared.Next(1000, 9999),
+            State: "Queued",
+            ErrorMessage: null,
+            PagesSubmitted: 1,
+            PagesPrinted: 0,
+            SubmittedAtUtc: DateTime.UtcNow,
+            CompletedAtUtc: null
+        );
+        _jobs[jobId] = status;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                EnsurePrinterReady(resolvedPrinter);
+                _jobs[jobId] = status with { State = "Spooling" };
+
+                bool success = false;
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var cleanFile = filePath.Replace("'", "''");
+                    var cleanPrinter = resolvedPrinter.Replace("'", "''");
+
+                    if (ext == ".txt" || ext == ".csv" || ext == ".log")
+                    {
+                        var ps = $"Get-Content -Path '{cleanFile}' | Out-Printer -Name '{cleanPrinter}'";
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = "powershell.exe",
+                            Arguments = $"-NoProfile -Command \"{ps}\"",
+                            CreateNoWindow = true,
+                            UseShellExecute = false
+                        };
+                        using var proc = Process.Start(psi);
+                        if (proc != null)
+                        {
+                            await proc.WaitForExitAsync();
+                            success = proc.ExitCode == 0;
+                        }
+                    }
+                    else
+                    {
+                        var ps = $"Start-Process -FilePath '{cleanFile}' -Verb PrintTo -ArgumentList '\"{cleanPrinter}\"' -PassThru | ForEach-Object {{ Start-Sleep -Seconds 5; if (!$_.HasExited) {{ Stop-Process -Id $_.Id -Force }} }}";
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = "powershell.exe",
+                            Arguments = $"-NoProfile -Command \"{ps}\"",
+                            CreateNoWindow = true,
+                            UseShellExecute = false
+                        };
+                        using var proc = Process.Start(psi);
+                        if (proc != null)
+                        {
+                            await proc.WaitForExitAsync();
+                            success = true;
+                        }
+                    }
+                }
+
+                if (success)
+                {
+                    _jobs[jobId] = status with { State = "Completed", PagesPrinted = 1, CompletedAtUtc = DateTime.UtcNow };
+                    _logger.LogInformation("Local file {File} printed successfully to {Printer}", filePath, resolvedPrinter);
+                }
+                else
+                {
+                    _jobs[jobId] = status with { State = "Failed", ErrorMessage = "Print command failed or timed out." };
+                }
+            }
+            catch (Exception ex)
+            {
+                _jobs[jobId] = status with { State = "Failed", ErrorMessage = ex.Message };
+            }
+        });
+
+        return status;
     }
 
     private string? FindSumatraPdf()

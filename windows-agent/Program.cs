@@ -52,8 +52,7 @@ var startTime = DateTime.UtcNow;
 // 1. Health & Telemetry Status
 app.MapGet("/api/v1/health", (ISpoolerPrintService spooler) =>
 {
-    var printers = spooler.GetPrinters();
-    var defaultPrinter = printers.FirstOrDefault(p => p.IsDefault)?.Name ?? "Brother DCP-T530DW Printer";
+    var activePrinter = spooler.ResolvePrinterName(null);
 
     return Results.Ok(new HealthResponse(
         Status: "healthy",
@@ -63,7 +62,7 @@ app.MapGet("/api/v1/health", (ISpoolerPrintService spooler) =>
         TailscaleHostname: "desktop-00ctdtl.tailfc14cd.ts.net",
         Port: 8766,
         UptimeSeconds: Math.Round((DateTime.UtcNow - startTime).TotalSeconds, 1),
-        DefaultPrinter: defaultPrinter
+        DefaultPrinter: activePrinter
     ));
 });
 
@@ -84,17 +83,84 @@ app.MapPost("/api/v1/pair", ([FromBody] PairingRequest req, ISecurityService sec
     ));
 });
 
-// 3. Enumerate Windows Printers (Authenticated)
+// 3. Enumerate Windows Printers (Authenticated or Local Desktop)
 app.MapGet("/api/v1/printers", (HttpRequest request, ISecurityService sec, ISpoolerPrintService spooler) =>
 {
+    bool isLocal = System.Net.IPAddress.IsLoopback(request.HttpContext.Connection.RemoteIpAddress ?? System.Net.IPAddress.Loopback);
     var authHeader = request.Headers["Authorization"].FirstOrDefault();
-    if (!sec.ValidateAuthToken(authHeader))
+    if (!isLocal && !sec.ValidateAuthToken(authHeader))
     {
         return Results.Unauthorized();
     }
 
     var printers = spooler.GetPrinters();
-    return Results.Ok(printers);
+    var config = spooler.GetPrinterConfig();
+    var resolvedActive = spooler.ResolvePrinterName(null);
+    return Results.Ok(new
+    {
+        activePrinter = config.ActivePrinter,
+        resolvedActivePrinter = resolvedActive,
+        printers = printers
+    });
+});
+
+// 3b. Get Active Printer Configuration
+app.MapGet("/api/v1/printer/config", (ISpoolerPrintService spooler) =>
+{
+    var config = spooler.GetPrinterConfig();
+    var resolved = spooler.ResolvePrinterName(null);
+    return Results.Ok(new
+    {
+        config = config,
+        resolvedActivePrinter = resolved
+    });
+});
+
+// 3c. Switch / Select Active Printer (Local Desktop or Authenticated Client)
+app.MapPost("/api/v1/printers/active", ([FromBody] SelectPrinterRequest req, HttpRequest request, ISecurityService sec, ISpoolerPrintService spooler) =>
+{
+    bool isLocal = System.Net.IPAddress.IsLoopback(request.HttpContext.Connection.RemoteIpAddress ?? System.Net.IPAddress.Loopback);
+    var authHeader = request.Headers["Authorization"].FirstOrDefault();
+    if (!isLocal && !sec.ValidateAuthToken(authHeader))
+    {
+        return Results.Unauthorized();
+    }
+
+    bool success = spooler.SetActivePrinter(req.PrinterName, req.SetAsWindowsDefault);
+    var resolved = spooler.ResolvePrinterName(null);
+    return Results.Ok(new
+    {
+        success = success,
+        activePrinter = req.PrinterName,
+        resolvedActivePrinter = resolved,
+        message = $"Active printer successfully switched to: {resolved}"
+    });
+});
+
+// 3d. Direct Print Local File (from Desktop tool or local scripts)
+app.MapPost("/api/v1/print/file", async ([FromBody] DirectPrintFileRequest req, HttpRequest request, ISecurityService sec, ISpoolerPrintService spooler) =>
+{
+    bool isLocal = System.Net.IPAddress.IsLoopback(request.HttpContext.Connection.RemoteIpAddress ?? System.Net.IPAddress.Loopback);
+    var authHeader = request.Headers["Authorization"].FirstOrDefault();
+    if (!isLocal && !sec.ValidateAuthToken(authHeader))
+    {
+        return Results.Unauthorized();
+    }
+
+    if (string.IsNullOrWhiteSpace(req.FilePath))
+    {
+        return Results.BadRequest(new { error = "Missing filePath parameter." });
+    }
+
+    try
+    {
+        var status = await spooler.PrintLocalFileAsync(req.FilePath, req.PrinterName, req.Copies, req.DocumentName);
+        return Results.Ok(status);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
 });
 
 // 4. Submit PDF Print Job (Supports Multipart and Direct Raw PDF Stream)
@@ -109,7 +175,7 @@ app.MapPost("/api/v1/print", async (HttpRequest request, ISecurityService sec, I
     Stream? pdfStream = null;
     string docName = "Marg_Document.pdf";
     string? sha256 = null;
-    string? targetPrinter = "Brother DCP-T530DW Printer";
+    string? targetPrinter = null;
     long fileLength = 0;
 
     if (request.HasFormContentType)
@@ -169,10 +235,12 @@ app.MapPost("/api/v1/print", async (HttpRequest request, ISecurityService sec, I
         return Results.BadRequest(new { error = "File size exceeds 50MB limit." });
     }
 
+    var resolvedPrinter = spooler.ResolvePrinterName(targetPrinter);
+
     var metadata = new PrintJobSubmission(
         JobId: Guid.NewGuid().ToString("D"),
         ClientTimestamp: DateTime.UtcNow,
-        PrinterName: targetPrinter,
+        PrinterName: resolvedPrinter,
         DocumentName: docName,
         FileSha256: sha256
     );

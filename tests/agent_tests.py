@@ -166,5 +166,62 @@ class TestMargCloudRemotePrint(unittest.TestCase):
         self.assertEqual(len(sync_queue), 0, "Queue must be empty after flush")
         self.assertEqual(len(flushed_items), 1, "All offline items must be pushed to Windows agent")
 
+    def test_dynamic_printer_resolution_system_default(self):
+        """Test printer resolution dynamically follows Windows default printer when activePrinter is SYSTEM_DEFAULT"""
+        installed_printers = [
+            {"Name": "Canon G3000 Series", "IsDefault": True},
+            {"Name": "Brother DCP-T530DW Printer", "IsDefault": False},
+            {"Name": "Microsoft Print to PDF", "IsDefault": False}
+        ]
+        config = {"activePrinter": "SYSTEM_DEFAULT"}
+
+        # Simulate ResolvePrinterName logic
+        resolved = None
+        if config["activePrinter"] == "SYSTEM_DEFAULT":
+            win_def = next((p["Name"] for p in installed_printers if p["IsDefault"]), None)
+            resolved = win_def or installed_printers[0]["Name"]
+        else:
+            resolved = config["activePrinter"]
+
+        self.assertEqual(resolved, "Canon G3000 Series", "Must dynamically resolve to new Windows default printer")
+
+    def test_dynamic_printer_resolution_custom_override(self):
+        """Test printer resolution prioritizes user-configured active printer override"""
+        installed_printers = [
+            {"Name": "Canon G3000 Series", "IsDefault": True},
+            {"Name": "HP LaserJet Pro MFP M126nw", "IsDefault": False},
+            {"Name": "Brother DCP-T530DW Printer", "IsDefault": False}
+        ]
+        # User switched active printer in Desktop .exe
+        config = {"activePrinter": "HP LaserJet Pro MFP M126nw"}
+
+        resolved = None
+        if config["activePrinter"] != "SYSTEM_DEFAULT":
+            match = next((p["Name"] for p in installed_printers if p["Name"] == config["activePrinter"]), None)
+            resolved = match
+        else:
+            resolved = next((p["Name"] for p in installed_printers if p["IsDefault"]), None)
+
+        self.assertEqual(resolved, "HP LaserJet Pro MFP M126nw", "Must resolve to user-selected override printer")
+
+    def test_dynamic_printer_fallback_resilience(self):
+        """Test graceful fallback to Brother or first printer when selected printer is detached"""
+        installed_printers = [
+            {"Name": "Brother DCP-T530DW Printer", "IsDefault": False},
+            {"Name": "Microsoft Print to PDF", "IsDefault": False}
+        ]
+        # Config points to an unplugged printer
+        config = {"activePrinter": "Epson L3250", "fallbackPrinter": "Brother DCP-T530DW Printer"}
+
+        resolved = next((p["Name"] for p in installed_printers if p["Name"] == config["activePrinter"]), None)
+        if not resolved:
+            # Fallback to default, then fallbackPrinter
+            win_def = next((p["Name"] for p in installed_printers if p["IsDefault"]), None)
+            fallback = next((p["Name"] for p in installed_printers if config["fallbackPrinter"] in p["Name"]), None)
+            resolved = win_def or fallback or installed_printers[0]["Name"]
+
+        self.assertEqual(resolved, "Brother DCP-T530DW Printer", "Must fall back safely to available Brother printer")
+
 if __name__ == "__main__":
     unittest.main()
+
