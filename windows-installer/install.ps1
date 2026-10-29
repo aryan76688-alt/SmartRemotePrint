@@ -81,8 +81,8 @@ if (-not (Test-Path $sourceExe)) {
 # Fallback 1: Extract from windows-installer.zip if present locally
 if (-not (Test-Path $sourceExe)) {
     $zipCandidates = @(
-        Join-Path $PSScriptRoot "windows-installer.zip",
-        Join-Path $PSScriptRoot "..\windows-installer.zip",
+        (Join-Path $PSScriptRoot "windows-installer.zip"),
+        (Join-Path $PSScriptRoot "..\windows-installer.zip"),
         "C:\SmartRemotePrint\windows-installer.zip"
     )
     foreach ($zip in $zipCandidates) {
