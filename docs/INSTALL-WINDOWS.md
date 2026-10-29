@@ -1,80 +1,65 @@
-# Windows 10 Setup Guide: Smart Remote Print Agent
+# Windows 10 & 11 Setup Guide: Smart Remote Print Agent
 
-## Prerequisites
-- **Operating System**: Windows 10 (or Windows 11) 64-bit on office computer (`desktop-00ctdtl`).
-- **Printer**: Brother DCP-T530DW Printer connected via USB001 (or Wi-Fi).
-- **Tailscale**: Installed and connected to the tailnet (`tailfc14cd.ts.net`).
-- **Port**: TCP 8766 (Preserves existing `C:\OfficePrint` on 8765).
+## Quick 1-Command Installation (PowerShell Administrator)
 
----
-
-## Installation Steps
-
-### Option 1: 1-Click Batch Installer (Recommended for Command Prompt & Explorer)
-1. Copy or extract `windows-installer/` to your PC (e.g. `C:\SmartRemotePrint\windows-installer`).
-2. Simply double-click **`install.bat`** (or run `install.bat` in Command Prompt):
-   ```cmd
-   cd "C:\SmartRemotePrint\windows-installer"
-   install.bat
-   ```
-3. If prompted by Windows UAC, click **"Yes"** to grant Administrator privileges.
-4. The installer will automatically:
-   - Configure port 8766 in Windows Firewall
-   - Install `SmartRemotePrintAgent.exe` as an auto-starting 24/7 background Windows NT Service
-   - Install `SmartRemotePrintDesktop.exe` ("Smart Remote Print (Print Anything)" desktop shortcut)
-   - Auto-detect the Brother DCP-T530DW or default printer
-   - Set up Marg ERP Auto-Sync at `C:\SmartRemotePrint\MargSync`
-
----
-
-### Option 2: Run via PowerShell
-If running directly in PowerShell:
+Run this single command in **PowerShell (Run as Administrator)**:
 ```powershell
-cd "C:\SmartRemotePrint\windows-installer"
+Invoke-WebRequest -Uri "https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/windows-installer.zip" -OutFile "$env:TEMP\windows-installer.zip"
+Expand-Archive -Path "$env:TEMP\windows-installer.zip" -DestinationPath "C:\SmartRemotePrint" -Force
+Set-Location "C:\SmartRemotePrint\windows-installer"
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\install.ps1
 ```
 
-> **Note for Command Prompt (`cmd.exe`) users**:
-> If you see `'Set-ExecutionPolicy' is not recognized as an internal or external command`, you are in standard Command Prompt instead of PowerShell. In Command Prompt, run:
-> ```cmd
-> powershell -ExecutionPolicy Bypass -File .\install.ps1
-> ```
-> Or simply run `install.bat`.
+---
+
+## Prerequisites
+- **Operating System**: Windows 10 or Windows 11 64-bit on office computer.
+- **Printer**: Brother DCP-T530DW or any Windows Default Printer (USB, Wi-Fi, or Network).
+- **Tailscale**: Optional / recommended for printing anywhere outside local Wi-Fi.
+- **Port**: TCP 8766 (Preserves existing legacy services on 8765).
 
 ---
 
-### Option 3: Manual Standalone Execution
-If you prefer running without installation:
-1. Double click `SmartRemotePrintAgent.exe`.
-2. A console window will appear displaying:
-   ```
-   =================================================
-   SMART REMOTE PRINT - PAIRING PIN: [549210]
-   Enter this 6-digit PIN on Lenovo Tab P12 to pair.
-   =================================================
-   ```
-3. Take note of the 6-digit PIN to pair your Lenovo Tab P12.
+## Installation Options
 
----
-
-## Verifying Office Printer Queue
-To check your active printer queue in PowerShell:
+### Option 1: Automated Git Clone or Pull
+If you already cloned the repository to `C:\SmartRemotePrint`:
 ```powershell
-Get-Printer | Where-Object { $_.Name -like "*Brother DCP-T530DW*" }
+cd "C:\SmartRemotePrint"
+git pull origin main
+cd "windows-installer"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\install.ps1
 ```
-You should see:
-- Name: `Brother DCP-T530DW Printer`
-- PortName: `USB001`
-- DriverName: `Brother DCP-T530DW Printer`
+> **Note**: `install.ps1` automatically detects if binaries are present locally, and will auto-download them from GitHub Release v1.2.0 if missing.
+
+### Option 2: Pre-Packaged Offline Installer (.zip)
+1. Download **[windows-installer.zip](https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/windows-installer.zip)** from GitHub Releases.
+2. Extract to `C:\SmartRemotePrint\`.
+3. Open `windows-installer` folder, right-click `install.bat` and click **Run as administrator** (or run `.\install.ps1` in PowerShell).
+
+---
+
+## What Gets Installed
+1. **24/7 Windows NT Service (`SmartRemotePrintAgent`)**:
+   - Runs in background even when user logs off or screen locks.
+   - Listens on dedicated port `8766`.
+   - Dynamic printer switching: follows your Windows Default Printer or active printer selected from tablet/desktop.
+2. **Desktop Print Manager GUI (`SmartRemotePrintDesktop.exe`)**:
+   - Desktop shortcut: *Smart Remote Print (Print Anything)*
+   - Right-click context menu: *🖨️ Print with Smart Remote Print* for PDFs, CSVs, TXT files.
+   - Real-time printer switcher dropdown.
+3. **Marg ERP Pharma Automation**:
+   - Background CSV Watch folder: `C:\SmartRemotePrint\MargSync\`
+   - Pharma keyboard hotkey helpers (`MargPharmaKeys.bat`)
 
 ---
 
 ## Uninstallation
-To cleanly remove the agent:
-- Double-click **`uninstall.bat`** (or run `uninstall.bat` in Command Prompt), OR
-- In PowerShell:
-  ```powershell
-  cd "path\to\windows-installer"
-  .\uninstall.ps1
-  ```
+To cleanly remove the service and files:
+```powershell
+cd "C:\SmartRemotePrint\windows-installer"
+.\uninstall.ps1
+```
+```

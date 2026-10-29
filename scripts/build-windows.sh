@@ -9,6 +9,7 @@ dotnet publish "$AGENT_DIR/SmartRemotePrintAgent.csproj" \
     -r win-x64 \
     --self-contained true \
     -p:PublishSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
     -p:IncludeNativeLibrariesForSelfExtract=true \
     -o "$AGENT_DIR/bin/publish"
 
@@ -19,6 +20,7 @@ dotnet publish "$DESKTOP_DIR/SmartRemotePrintDesktop.csproj" \
     -r win-x64 \
     --self-contained true \
     -p:PublishSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
     -p:IncludeNativeLibrariesForSelfExtract=true \
     -o "$DESKTOP_DIR/bin/publish"
 

@@ -23,14 +23,8 @@ $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
 $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
-    Write-Host "Administrator privileges required. Requesting elevation..." -ForegroundColor Yellow
-    try {
-        Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-        Exit 0
-    } catch {
-        Write-Warning "Elevation canceled or failed. Please run PowerShell as Administrator."
-        Exit 1
-    }
+    Write-Warning "Please run PowerShell as Administrator to install the Windows Service."
+    Exit 1
 }
 
 # 2. Check Existing Environment and Verify Non-Interference
@@ -84,12 +78,59 @@ if (-not (Test-Path $sourceExe)) {
     $sourceExe = Join-Path $PSScriptRoot "..\windows-agent\bin\publish\SmartRemotePrintAgent.exe"
 }
 
+# Fallback 1: Extract from windows-installer.zip if present locally
+if (-not (Test-Path $sourceExe)) {
+    $zipCandidates = @(
+        Join-Path $PSScriptRoot "windows-installer.zip",
+        Join-Path $PSScriptRoot "..\windows-installer.zip",
+        "C:\SmartRemotePrint\windows-installer.zip"
+    )
+    foreach ($zip in $zipCandidates) {
+        if (Test-Path $zip) {
+            Write-Host "  -> Extracting pre-compiled binaries from $zip..." -ForegroundColor Cyan
+            try {
+                Expand-Archive -Path $zip -DestinationPath (Split-Path $PSScriptRoot -Parent) -Force
+                $sourceExe = Join-Path $PSScriptRoot "SmartRemotePrintAgent.exe"
+                if (Test-Path $sourceExe) { break }
+            } catch { }
+        }
+    }
+}
+
+# Fallback 2: Auto-download from GitHub Release if missing
+if (-not (Test-Path $sourceExe)) {
+    Write-Host "  -> SmartRemotePrintAgent.exe not found locally." -ForegroundColor Yellow
+    Write-Host "  -> Auto-downloading pre-compiled binaries from GitHub..." -ForegroundColor Cyan
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $targetFile = Join-Path $PSScriptRoot "SmartRemotePrintAgent.exe"
+        $agentUrl = "https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/SmartRemotePrintAgent.exe"
+        Write-Host "  -> Downloading SmartRemotePrintAgent.exe (~43 MB)..." -ForegroundColor Gray
+        Invoke-WebRequest -Uri $agentUrl -OutFile $targetFile -UseBasicParsing -ErrorAction Stop
+        if (Test-Path $targetFile) {
+            $sourceExe = $targetFile
+            Write-Host "  -> Download complete!" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "  -> Direct download failed. Trying archive download..." -ForegroundColor Yellow
+        try {
+            $zipTarget = Join-Path $PSScriptRoot "windows-installer.zip"
+            Invoke-WebRequest -Uri "https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/windows-installer.zip" -OutFile $zipTarget -UseBasicParsing -ErrorAction Stop
+            Expand-Archive -Path $zipTarget -DestinationPath (Split-Path $PSScriptRoot -Parent) -Force
+            $sourceExe = Join-Path $PSScriptRoot "SmartRemotePrintAgent.exe"
+        } catch {
+            Write-Error "  -> Could not download or locate SmartRemotePrintAgent.exe: $($_.Exception.Message)"
+            Exit 1
+        }
+    }
+}
+
 if (Test-Path $sourceExe) {
     Copy-Item -Path $sourceExe -Destination (Join-Path $InstallPath "SmartRemotePrintAgent.exe") -Force
     Copy-Item -Path $sourceExe -Destination (Join-Path $InstallPath "SmartRemotePrintAgent_Win10_Win11.exe") -Force
     Write-Host "  -> Installed SmartRemotePrintAgent.exe successfully." -ForegroundColor Green
 } else {
-    Write-Error "  -> Could not locate SmartRemotePrintAgent.exe."
+    Write-Error "  -> Could not locate SmartRemotePrintAgent.exe. Please ensure the binary exists in windows-installer/ or run 'git pull'."
     Exit 1
 }
 
@@ -97,6 +138,16 @@ if (Test-Path $sourceExe) {
 $sourceDesktop = Join-Path $PSScriptRoot "SmartRemotePrintDesktop.exe"
 if (-not (Test-Path $sourceDesktop)) {
     $sourceDesktop = Join-Path $PSScriptRoot "..\windows-desktop\bin\publish\SmartRemotePrintDesktop.exe"
+}
+if (-not (Test-Path $sourceDesktop)) {
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $desktopUrl = "https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/SmartRemotePrintDesktop.exe"
+        Write-Host "  -> Auto-downloading SmartRemotePrintDesktop.exe (~68 MB)..." -ForegroundColor Gray
+        $targetDesktopFile = Join-Path $PSScriptRoot "SmartRemotePrintDesktop.exe"
+        Invoke-WebRequest -Uri $desktopUrl -OutFile $targetDesktopFile -UseBasicParsing -ErrorAction SilentlyContinue
+        if (Test-Path $targetDesktopFile) { $sourceDesktop = $targetDesktopFile }
+    } catch { }
 }
 if (Test-Path $sourceDesktop) {
     $targetDesktop = Join-Path $InstallPath "SmartRemotePrintDesktop.exe"
@@ -146,6 +197,15 @@ if (-not (Test-Path $cfgPath)) {
 $sourceSumatra = Join-Path $PSScriptRoot "SumatraPDF.exe"
 if (-not (Test-Path $sourceSumatra)) {
     $sourceSumatra = Join-Path $PSScriptRoot "..\windows-agent\SumatraPDF.exe"
+}
+if (-not (Test-Path $sourceSumatra)) {
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $sumatraUrl = "https://github.com/aryan76688-alt/SmartRemotePrint/releases/download/v1.2.0/SumatraPDF.exe"
+        $targetSumatra = Join-Path $PSScriptRoot "SumatraPDF.exe"
+        Invoke-WebRequest -Uri $sumatraUrl -OutFile $targetSumatra -UseBasicParsing -ErrorAction SilentlyContinue
+        if (Test-Path $targetSumatra) { $sourceSumatra = $targetSumatra }
+    } catch { }
 }
 if (Test-Path $sourceSumatra) {
     Copy-Item -Path $sourceSumatra -Destination (Join-Path $InstallPath "SumatraPDF.exe") -Force
@@ -271,12 +331,4 @@ try {
     Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync" -ForegroundColor Cyan
     Write-Host " Check Task Manager or services.msc to confirm SmartRemotePrintAgent." -ForegroundColor White
     Write-Host "===================================================================" -ForegroundColor Green
-}
-
-Write-Host ""
-Write-Host "Setup complete! Press Enter to exit..." -ForegroundColor Yellow
-try {
-    [void][System.Console]::ReadLine()
-} catch {
-    Start-Sleep -Seconds 3
 }
