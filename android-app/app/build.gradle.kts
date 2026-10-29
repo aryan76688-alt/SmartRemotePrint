@@ -10,8 +10,24 @@ android {
         applicationId = "com.smartremote.print"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.2.0"
+        manifestPlaceholders["appLabel"] = "Marg Cloud"
+    }
+
+    flavorDimensions += "device"
+    productFlavors {
+        create("tablet") {
+            dimension = "device"
+            manifestPlaceholders["appLabel"] = "Marg Cloud Tablet"
+            buildConfigField("String", "DEVICE_TYPE", "\"tablet\"")
+        }
+        create("mobile") {
+            dimension = "device"
+            applicationIdSuffix = ".mobile"
+            manifestPlaceholders["appLabel"] = "Marg Cloud Mobile"
+            buildConfigField("String", "DEVICE_TYPE", "\"mobile\"")
+        }
     }
 
     buildTypes {

@@ -90,6 +90,11 @@ class RemotePrintService : PrintService() {
                 val pdfBytes = input.readBytes()
                 input.close()
 
+                // If any offline jobs exist, try flushing first
+                if (OfflinePrintQueueManager.getPendingCount(applicationContext) > 0) {
+                    OfflinePrintQueueManager.flushQueue(applicationContext, apiClient)
+                }
+
                 val result = apiClient.submitPrintJob(pdfBytes, docName, copies)
 
                 mainHandler.post {
@@ -97,8 +102,10 @@ class RemotePrintService : PrintService() {
                         printJob.complete()
                         Toast.makeText(applicationContext, "✓ Job sent to Brother DCP-T530DW Spooler!", Toast.LENGTH_LONG).show()
                     } else {
-                        printJob.fail(result.errorMessage ?: "Spooling failed")
-                        Toast.makeText(applicationContext, "Print failed: ${result.errorMessage}", Toast.LENGTH_LONG).show()
+                        // Feature 5: Zero Dropped Bills - enqueue locally for automatic spooling upon reconnect
+                        OfflinePrintQueueManager.enqueue(applicationContext, pdfBytes, docName, copies)
+                        printJob.complete()
+                        Toast.makeText(applicationContext, "📥 PC Offline: Bill saved to queue. Auto-printing to Brother on reconnect!", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {

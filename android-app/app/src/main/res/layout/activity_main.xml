@@ -99,71 +99,6 @@
                 android:textStyle="bold" />
 
             <Button
-                android:id="@+id/barDirectPrintBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button"
-                android:text="🖨️ Direct Print"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barAccountsBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button"
-                android:text="🔑 Accounts"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barPharmaBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button"
-                android:text="⚡ Pharma Bar"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barVirtualKbdBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button_secondary"
-                android:text="⌨ D-Pad / Full"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barCsvSyncBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button"
-                android:text="📊 CSV Sync &amp; Backup"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barPairBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button_secondary"
-                android:text="⚙ Pair PC"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF" />
-
-            <Button
                 android:id="@+id/barCloseBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
@@ -174,132 +109,219 @@
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
-        <!-- Row 2: Navigation buttons and feature toggles -->
-        <LinearLayout
+        <!-- Row 2: Action Buttons (Responsive Horizontal Scroll for Phone & Tablet) -->
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:scrollbars="none"
+            android:fillViewport="true">
 
-            <Button
-                android:id="@+id/barBackBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="◀ Back"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/barForwardBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="6dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="▶ Fwd"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/barRefreshBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="6dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="⟳ Reload"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/barFit1080Btn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_button"
-                android:minHeight="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="🖥 Fit 1920x1080"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/barZoomOutBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="🔍 -"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/barZoomInBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="🔍 +"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/barZoomResetBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_button_secondary"
-                android:minHeight="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="100%"
-                android:textAllCaps="false"
-                android:textColor="#CBD5E1"
-                android:textSize="12sp" />
-
-            <CheckBox
-                android:id="@+id/barEscToggle"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:checked="true"
-                android:text="Tab Back = Esc Key"
-                android:textColor="#38BDF8"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/statusBeacon"
+                <Button
+                    android:id="@+id/barDirectPrintBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_button"
+                    android:text="🖨️ Direct Print"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barAccountsBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button"
+                    android:text="🔑 Accounts"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barPharmaBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button"
+                    android:text="⚡ Pharma Bar"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barVirtualKbdBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:text="⌨ D-Pad / Full"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barCsvSyncBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button"
+                    android:text="📊 CSV Sync &amp; Backup"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barPairBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:text="⚙ Pair PC"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Row 3: Navigation buttons, zoom controls and live status beacon -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:text="Office PC: Checking..."
-                android:textColor="#10B981"
-                android:textSize="12sp" />
-        </LinearLayout>
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/barBackBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="◀ Back"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/barForwardBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="▶ Fwd"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/barRefreshBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="⟳ Reload"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/barFit1080Btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button"
+                    android:minHeight="0dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="🖥 Fit 1920x1080"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/barZoomOutBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="🔍 -"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/barZoomInBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="🔍 +"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/barZoomResetBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="100%"
+                    android:textAllCaps="false"
+                    android:textColor="#CBD5E1"
+                    android:textSize="12sp" />
+
+                <CheckBox
+                    android:id="@+id/barEscToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:checked="true"
+                    android:text="Tab Back = Esc Key"
+                    android:textColor="#38BDF8"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/statusBeacon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="Office PC: Checking..."
+                    android:textColor="#10B981"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
     </LinearLayout>
 
     <!-- Floating Draggable Virtual Full Computer Keyboard & D-Pad -->

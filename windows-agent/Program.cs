@@ -53,17 +53,34 @@ var startTime = DateTime.UtcNow;
 app.MapGet("/api/v1/health", (ISpoolerPrintService spooler) =>
 {
     var activePrinter = spooler.ResolvePrinterName(null);
+    var telemetry = spooler.GetPrinterTelemetry(activePrinter);
 
     return Results.Ok(new HealthResponse(
         Status: "healthy",
         Service: "SmartRemotePrintAgent",
-        Version: "1.0.0",
+        Version: "1.2.0",
         MachineName: Environment.MachineName,
         TailscaleHostname: "desktop-00ctdtl.tailfc14cd.ts.net",
         Port: 8766,
         UptimeSeconds: Math.Round((DateTime.UtcNow - startTime).TotalSeconds, 1),
-        DefaultPrinter: activePrinter
+        DefaultPrinter: activePrinter,
+        PrinterTelemetry: telemetry
     ));
+});
+
+// 1b. Direct Printer Telemetry Endpoint
+app.MapGet("/api/v1/printer/telemetry", (ISpoolerPrintService spooler) =>
+{
+    var activePrinter = spooler.ResolvePrinterName(null);
+    var telemetry = spooler.GetPrinterTelemetry(activePrinter);
+    return Results.Ok(telemetry);
+});
+
+app.MapGet("/api/v1/printer/status", (ISpoolerPrintService spooler) =>
+{
+    var activePrinter = spooler.ResolvePrinterName(null);
+    var telemetry = spooler.GetPrinterTelemetry(activePrinter);
+    return Results.Ok(telemetry);
 });
 
 // 2. Device Pairing

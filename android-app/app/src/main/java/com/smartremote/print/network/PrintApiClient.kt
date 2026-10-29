@@ -17,7 +17,24 @@ class PrintApiClient(private val vault: SecurityVault) {
         return "http://${vault.serverHost}:${vault.serverPort}/api/v1"
     }
 
-    data class HealthInfo(val status: String, val machineName: String, val defaultPrinter: String, val uptimeSeconds: Double)
+    data class PrinterTelemetry(
+        val printerName: String,
+        val isOnline: Boolean,
+        val state: String,
+        val stateDetails: String,
+        val paperStatus: String,
+        val inkStatus: String,
+        val coverStatus: String,
+        val queuedJobsCount: Int
+    )
+
+    data class HealthInfo(
+        val status: String,
+        val machineName: String,
+        val defaultPrinter: String,
+        val uptimeSeconds: Double,
+        val printerTelemetry: PrinterTelemetry? = null
+    )
     data class PrinterQueue(val name: String, val port: String, val isOnline: Boolean, val status: String)
     data class SpoolResult(val jobId: String, val state: String, val errorMessage: String?)
 
@@ -31,11 +48,52 @@ class PrintApiClient(private val vault: SecurityVault) {
 
             if (conn.responseCode == 200) {
                 val json = JSONObject(conn.inputStream.bufferedReader().readText())
+                val telemObj = json.optJSONObject("printerTelemetry")
+                val telemetry = if (telemObj != null) {
+                    PrinterTelemetry(
+                        printerName = telemObj.optString("printerName", json.optString("defaultPrinter", "Brother DCP-T530DW Printer")),
+                        isOnline = telemObj.optBoolean("isOnline", true),
+                        state = telemObj.optString("state", "Ready"),
+                        stateDetails = telemObj.optString("stateDetails", "Ready"),
+                        paperStatus = telemObj.optString("paperStatus", "OK"),
+                        inkStatus = telemObj.optString("inkStatus", "OK"),
+                        coverStatus = telemObj.optString("coverStatus", "Closed"),
+                        queuedJobsCount = telemObj.optInt("queuedJobsCount", 0)
+                    )
+                } else null
+
                 HealthInfo(
                     status = json.getString("status"),
                     machineName = json.getString("machineName"),
                     defaultPrinter = json.optString("defaultPrinter", "Brother DCP-T530DW Printer"),
-                    uptimeSeconds = json.optDouble("uptimeSeconds", 0.0)
+                    uptimeSeconds = json.optDouble("uptimeSeconds", 0.0),
+                    printerTelemetry = telemetry
+                )
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun getPrinterTelemetry(): PrinterTelemetry? {
+        return try {
+            val url = URL("${baseUrl()}/printer/telemetry")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 3000
+            conn.readTimeout = 3000
+            conn.requestMethod = "GET"
+
+            if (conn.responseCode == 200) {
+                val telemObj = JSONObject(conn.inputStream.bufferedReader().readText())
+                PrinterTelemetry(
+                    printerName = telemObj.optString("printerName", "Brother DCP-T530DW Printer"),
+                    isOnline = telemObj.optBoolean("isOnline", true),
+                    state = telemObj.optString("state", "Ready"),
+                    stateDetails = telemObj.optString("stateDetails", "Ready"),
+                    paperStatus = telemObj.optString("paperStatus", "OK"),
+                    inkStatus = telemObj.optString("inkStatus", "OK"),
+                    coverStatus = telemObj.optString("coverStatus", "Closed"),
+                    queuedJobsCount = telemObj.optInt("queuedJobsCount", 0)
                 )
             } else null
         } catch (e: Exception) {

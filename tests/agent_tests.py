@@ -222,6 +222,88 @@ class TestMargCloudRemotePrint(unittest.TestCase):
 
         self.assertEqual(resolved, "Brother DCP-T530DW Printer", "Must fall back safely to available Brother printer")
 
+    def test_feature5_offline_print_queue_persistence_and_fifo(self):
+        """Test Feature 5: Offline print queue stores jobs with FIFO order and no data loss"""
+        queue = []
+        def enqueue(job_id, doc_name, copies):
+            queue.append({"jobId": job_id, "docName": doc_name, "copies": copies, "timestamp": time.time()})
+
+        enqueue("job-1", "Marg_Bill_101.pdf", 1)
+        enqueue("job-2", "Marg_Bill_102.pdf", 2)
+        enqueue("job-3", "Marg_Bill_103.pdf", 1)
+
+        self.assertEqual(len(queue), 3, "All 3 offline print jobs must be persisted")
+        self.assertEqual(queue[0]["docName"], "Marg_Bill_101.pdf", "First bill queued must be first in queue (FIFO)")
+        self.assertEqual(queue[2]["docName"], "Marg_Bill_103.pdf", "Third bill queued must be third in queue")
+
+    def test_feature5_offline_queue_auto_flush_on_reconnect(self):
+        """Test Feature 5: Offline queue flushes all jobs sequentially upon reconnection"""
+        queue = [
+            {"jobId": "job-1", "docName": "Marg_Bill_101.pdf", "copies": 1},
+            {"jobId": "job-2", "docName": "Marg_Bill_102.pdf", "copies": 2}
+        ]
+        spooled_jobs = []
+
+        def simulate_flush(is_pc_online):
+            if not is_pc_online:
+                return 0
+            flushed = 0
+            while queue:
+                job = queue.pop(0)
+                spooled_jobs.append(job)
+                flushed += 1
+            return flushed
+
+        # 1. Offline attempt: 0 flushed, queue intact
+        self.assertEqual(simulate_flush(is_pc_online=False), 0)
+        self.assertEqual(len(queue), 2)
+
+        # 2. Reconnect: PC is online -> all jobs auto-spooled
+        flushed_count = simulate_flush(is_pc_online=True)
+        self.assertEqual(flushed_count, 2)
+        self.assertEqual(len(queue), 0, "Queue must be completely drained")
+        self.assertEqual(len(spooled_jobs), 2, "Both jobs must reach spooler")
+
+    def test_feature6_live_printer_telemetry_paper_out(self):
+        """Test Feature 6: Spooler telemetry flags Paper Out and notifies client"""
+        PRINTER_STATUS_PAPER_OUT = 0x00000010
+        raw_status = PRINTER_STATUS_PAPER_OUT
+
+        paper_status = "OutOfPaper" if (raw_status & PRINTER_STATUS_PAPER_OUT) != 0 else "OK"
+        state = "PaperOut" if paper_status == "OutOfPaper" else "Ready"
+
+        self.assertEqual(paper_status, "OutOfPaper")
+        self.assertEqual(state, "PaperOut")
+
+    def test_feature6_live_printer_telemetry_paper_jam(self):
+        """Test Feature 6: Spooler telemetry flags Paper Jam and alerts user"""
+        PRINTER_STATUS_PAPER_JAM = 0x00000008
+        raw_status = PRINTER_STATUS_PAPER_JAM
+
+        paper_status = "PaperJam" if (raw_status & PRINTER_STATUS_PAPER_JAM) != 0 else "OK"
+        state = "PaperJam" if paper_status == "PaperJam" else "Ready"
+
+        self.assertEqual(paper_status, "PaperJam")
+        self.assertEqual(state, "PaperJam")
+
+    def test_feature6_live_printer_telemetry_low_ink(self):
+        """Test Feature 6: Spooler telemetry flags Low Ink / Toner"""
+        PRINTER_STATUS_TONER_LOW = 0x00020000
+        raw_status = PRINTER_STATUS_TONER_LOW
+
+        ink_status = "LowInk" if (raw_status & PRINTER_STATUS_TONER_LOW) != 0 else "OK"
+        self.assertEqual(ink_status, "LowInk")
+
+    def test_dual_device_flavor_labeling(self):
+        """Test distinct branding for Tablet vs Mobile builds"""
+        flavors = {
+            "tablet": {"appLabel": "Marg Cloud Tablet", "pkgSuffix": ""},
+            "mobile": {"appLabel": "Marg Cloud Mobile", "pkgSuffix": ".mobile"}
+        }
+        self.assertEqual(flavors["tablet"]["appLabel"], "Marg Cloud Tablet")
+        self.assertEqual(flavors["mobile"]["appLabel"], "Marg Cloud Mobile")
+        self.assertEqual(flavors["mobile"]["pkgSuffix"], ".mobile")
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -15,6 +15,7 @@ public interface ISpoolerPrintService
     ActivePrinterConfig GetPrinterConfig();
     bool SetActivePrinter(string printerName, bool setAsWindowsDefault = false);
     Task<PrintJobStatus> PrintLocalFileAsync(string filePath, string? printerName = null, int copies = 1, string? documentName = null);
+    PrinterTelemetry GetPrinterTelemetry(string? printerName = null);
 }
 
 public class SpoolerPrintService : ISpoolerPrintService
@@ -52,6 +53,61 @@ public class SpoolerPrintService : ISpoolerPrintService
 
     [DllImport("winspool.Drv", EntryPoint = "WritePrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
     private static extern bool WritePrinter(IntPtr hPrinter, IntPtr pBytes, int dwCount, out int dwWritten);
+
+    [DllImport("winspool.Drv", EntryPoint = "GetPrinterA", SetLastError = true, CharSet = CharSet.Ansi, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
+    private static extern bool GetPrinter(IntPtr hPrinter, int dwLevel, IntPtr pPrinter, int cbBuf, out int pcbNeeded);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    private struct PRINTER_INFO_2A
+    {
+        public string? pServerName;
+        public string? pPrinterName;
+        public string? pShareName;
+        public string? pPortName;
+        public string? pDriverName;
+        public string? pComment;
+        public string? pLocation;
+        public IntPtr pDevMode;
+        public string? pSepFile;
+        public string? pPrintProcessor;
+        public string? pDatatype;
+        public string? pParameters;
+        public IntPtr pSecurityDescriptor;
+        public uint Attributes;
+        public uint Priority;
+        public uint DefaultPriority;
+        public uint StartTime;
+        public uint UntilTime;
+        public uint Status;
+        public uint cJobs;
+        public uint AveragePPM;
+    }
+
+    private const uint PRINTER_STATUS_PAUSED            = 0x00000001;
+    private const uint PRINTER_STATUS_ERROR             = 0x00000002;
+    private const uint PRINTER_STATUS_PENDING_DELETION  = 0x00000004;
+    private const uint PRINTER_STATUS_PAPER_JAM         = 0x00000008;
+    private const uint PRINTER_STATUS_PAPER_OUT         = 0x00000010;
+    private const uint PRINTER_STATUS_MANUAL_FEED       = 0x00000020;
+    private const uint PRINTER_STATUS_PAPER_PROBLEM     = 0x00000040;
+    private const uint PRINTER_STATUS_OFFLINE           = 0x00000080;
+    private const uint PRINTER_STATUS_IO_ACTIVE         = 0x00000100;
+    private const uint PRINTER_STATUS_BUSY              = 0x00000200;
+    private const uint PRINTER_STATUS_PRINTING          = 0x00000400;
+    private const uint PRINTER_STATUS_OUTPUT_BIN_FULL   = 0x00000800;
+    private const uint PRINTER_STATUS_NOT_AVAILABLE     = 0x00001000;
+    private const uint PRINTER_STATUS_WAITING           = 0x00002000;
+    private const uint PRINTER_STATUS_PROCESSING        = 0x00004000;
+    private const uint PRINTER_STATUS_INITIALIZING      = 0x00008000;
+    private const uint PRINTER_STATUS_WARMING_UP        = 0x00010000;
+    private const uint PRINTER_STATUS_TONER_LOW         = 0x00020000;
+    private const uint PRINTER_STATUS_NO_TONER          = 0x00040000;
+    private const uint PRINTER_STATUS_PAGE_PUNT         = 0x00080000;
+    private const uint PRINTER_STATUS_USER_INTERVENTION = 0x00100000;
+    private const uint PRINTER_STATUS_OUT_OF_MEMORY     = 0x00200000;
+    private const uint PRINTER_STATUS_DOOR_OPEN         = 0x00400000;
+    private const uint PRINTER_STATUS_SERVER_UNKNOWN    = 0x00800000;
+    private const uint PRINTER_STATUS_POWER_SAVE        = 0x01000000;
 
     public SpoolerPrintService(ILogger<SpoolerPrintService> logger)
     {
@@ -681,5 +737,151 @@ public class SpoolerPrintService : ISpoolerPrintService
         {
             ClosePrinter(hPrinter);
         }
+    }
+
+    public PrinterTelemetry GetPrinterTelemetry(string? printerName = null)
+    {
+        var resolvedName = ResolvePrinterName(printerName);
+        var now = DateTime.UtcNow;
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return new PrinterTelemetry(
+                PrinterName: resolvedName,
+                IsOnline: true,
+                State: "Ready",
+                StateDetails: "Simulated Ready on non-Windows environment",
+                PaperStatus: "OK",
+                InkStatus: "OK",
+                CoverStatus: "Closed",
+                QueuedJobsCount: 0,
+                LastCheckedUtc: now
+            );
+        }
+
+        try
+        {
+            if (OpenPrinter(resolvedName, out IntPtr hPrinter, IntPtr.Zero))
+            {
+                try
+                {
+                    GetPrinter(hPrinter, 2, IntPtr.Zero, 0, out int bytesNeeded);
+                    if (bytesNeeded > 0)
+                    {
+                        IntPtr pBuf = Marshal.AllocHGlobal(bytesNeeded);
+                        try
+                        {
+                            if (GetPrinter(hPrinter, 2, pBuf, bytesNeeded, out _))
+                            {
+                                var info = Marshal.PtrToStructure<PRINTER_INFO_2A>(pBuf);
+                                uint s = info.Status;
+                                int jobCount = (int)info.cJobs;
+
+                                string paper = "OK";
+                                if ((s & PRINTER_STATUS_PAPER_OUT) != 0) paper = "OutOfPaper";
+                                else if ((s & PRINTER_STATUS_PAPER_JAM) != 0) paper = "PaperJam";
+
+                                string ink = "OK";
+                                if ((s & PRINTER_STATUS_NO_TONER) != 0) ink = "NoInk";
+                                else if ((s & PRINTER_STATUS_TONER_LOW) != 0) ink = "LowInk";
+
+                                string cover = (s & PRINTER_STATUS_DOOR_OPEN) != 0 ? "DoorOpen" : "Closed";
+
+                                bool isOnline = (s & PRINTER_STATUS_OFFLINE) == 0;
+                                string state = "Ready";
+                                string details = "Printer is idle and ready to print.";
+
+                                if (!isOnline)
+                                {
+                                    state = "Offline";
+                                    details = "Printer is offline or disconnected.";
+                                }
+                                else if (paper == "OutOfPaper")
+                                {
+                                    state = "PaperOut";
+                                    details = "Printer is OUT OF PAPER. Please reload paper tray.";
+                                }
+                                else if (paper == "PaperJam")
+                                {
+                                    state = "PaperJam";
+                                    details = "PAPER JAM detected in printer mechanism. Please clear paper.";
+                                }
+                                else if (cover == "DoorOpen")
+                                {
+                                    state = "DoorOpen";
+                                    details = "Printer door / cover is open. Please close cover.";
+                                }
+                                else if (ink == "NoInk")
+                                {
+                                    state = "NoInk";
+                                    details = "Ink cartridge / toner is empty.";
+                                }
+                                else if (ink == "LowInk")
+                                {
+                                    state = "LowInk";
+                                    details = "Ink or toner level is low.";
+                                }
+                                else if ((s & PRINTER_STATUS_PAUSED) != 0)
+                                {
+                                    state = "Paused";
+                                    details = "Printer queue is currently paused.";
+                                }
+                                else if ((s & PRINTER_STATUS_ERROR) != 0)
+                                {
+                                    state = "Error";
+                                    details = "Printer reports a general error condition.";
+                                }
+                                else if ((s & PRINTER_STATUS_PRINTING) != 0 || jobCount > 0)
+                                {
+                                    state = "Printing";
+                                    details = $"Printing active ({jobCount} job(s) in Windows Spooler).";
+                                }
+
+                                return new PrinterTelemetry(
+                                    PrinterName: resolvedName,
+                                    IsOnline: isOnline,
+                                    State: state,
+                                    StateDetails: details,
+                                    PaperStatus: paper,
+                                    InkStatus: ink,
+                                    CoverStatus: cover,
+                                    QueuedJobsCount: jobCount,
+                                    LastCheckedUtc: now
+                                );
+                            }
+                        }
+                        finally
+                        {
+                            Marshal.FreeHGlobal(pBuf);
+                        }
+                    }
+                }
+                finally
+                {
+                    ClosePrinter(hPrinter);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Direct WinSpool GetPrinter telemetry error for {Printer}: {Msg}", resolvedName, ex.Message);
+        }
+
+        // Fallback: check Windows printers list
+        var printers = GetPrinters();
+        var pQueue = printers.FirstOrDefault(p => string.Equals(p.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
+        bool online = pQueue?.IsOnline ?? true;
+
+        return new PrinterTelemetry(
+            PrinterName: resolvedName,
+            IsOnline: online,
+            State: online ? "Ready" : "Offline",
+            StateDetails: online ? "Printer is online and ready." : "Printer is currently offline.",
+            PaperStatus: "OK",
+            InkStatus: "OK",
+            CoverStatus: "Closed",
+            QueuedJobsCount: 0,
+            LastCheckedUtc: now
+        );
     }
 }

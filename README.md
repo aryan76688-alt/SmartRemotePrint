@@ -61,7 +61,25 @@
 - Direct Windows Spooler integration via `winspool.drv`.
 - Support for Brother DCP-T530DW USB001 and Wi-Fi queues.
 
-### 7. Zero-Trust Security & Android Keystore
+### 7. Feature 5: Offline Print Queue & Auto-Resume (Zero Dropped Bills)
+- If the office computer reboots, disconnects from Wi-Fi, or is temporarily offline while billing on the tablet/mobile, print jobs are **never lost or discarded**.
+- Documents are safely stored in an offline queue on the Android device (`OfflinePrintQueueManager`).
+- When the PC connection is restored, the queue **automatically resumes and flushes all queued bills in order** directly to the Brother DCP-T530DW spooler without requiring operator intervention.
+
+### 8. Feature 6: Live Printer Ink & Paper Spooler Telemetry
+- Directly interfaces with Windows Spooler (`winspool.drv`) to stream live hardware telemetry to Android:
+  - 🔴 **OUT OF PAPER**: Instantly alerts tablet operator if paper tray is empty.
+  - 🔴 **PAPER JAM**: Detects paper jams and warns the operator.
+  - 🟡 **COVER OPEN**: Warns if printer access door or scanner unit is open.
+  - 🟡 **LOW INK / TONER**: Warns before ink runs completely out.
+  - 🔵 **PRINTING**: Shows real-time job queue count.
+  - 🟢 **READY**: Green indicator when spooler is ready.
+
+### 9. Dual Android Device Builds (Tablet & Mobile)
+- **`MargCloud-Tablet.apk`**: Specifically tuned for wide screens (Lenovo Tab P12), 1920x1080 desktop mode, full pharma ribbon, and hardware keyboard mapping.
+- **`MargCloud-Mobile.apk`**: Tailored for Android smartphones with portrait orientation, swipeable responsive action bar, and touch-optimized ERP navigation.
+
+### 10. Zero-Trust Security & Android Keystore
 - Pairing with 6-digit OTP code (`260890`).
 - Cryptographically secure Bearer tokens stored in hardware-backed `AndroidKeyStore`.
 - Zero plaintext credential storage.
@@ -73,14 +91,16 @@
 ## 📁 Repository Structure
 ```
 SmartRemotePrint/
-├── MargCloud.apk         # Production Android APK (with Pharma Quick Bar & Key Mappings)
-├── windows-installer.zip # Ready-to-extract Windows 10/11 Service & Agent package
-├── android-app/          # Android Studio project (Kotlin, MinSDK 26)
-├── windows-agent/        # Windows C# .NET 6 Print Agent & MargSync source code
-├── windows-installer/    # Automated install.ps1, standalone EXE & Pharma Keys
-├── shared-protocol/      # Standardized JSON Schemas & OpenAPI spec
-├── ui-stitch/            # Google Stitch tablet designs & HTML screens
-├── scripts/              # Build & release automation scripts
-├── tests/                # Automated test suite
-└── docs/                 # Detailed setup & troubleshooting guides
+├── MargCloud-Tablet.apk    # Optimized APK for Lenovo Tab P12 & Android tablets
+├── MargCloud-Mobile.apk    # Optimized APK for Android smartphones
+├── MargCloud.apk           # Production universal Android APK
+├── windows-installer.zip   # Ready-to-extract Windows 10/11 Service & Agent package
+├── android-app/            # Android Studio project (Kotlin, MinSDK 26)
+├── windows-agent/          # Windows C# .NET 6 Print Agent & Spooler Telemetry
+├── windows-installer/      # Automated install.ps1, standalone EXEs & Pharma Keys
+├── shared-protocol/        # Standardized JSON Schemas & OpenAPI spec
+├── ui-stitch/              # Google Stitch tablet designs & HTML screens
+├── scripts/                # Build & release automation scripts
+├── tests/                  # Automated test suite (21 unit tests)
+└── docs/                   # Detailed setup & troubleshooting guides
 ```

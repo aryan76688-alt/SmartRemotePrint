@@ -10,7 +10,20 @@ public record HealthResponse(
     [property: JsonPropertyName("tailscaleHostname")] string TailscaleHostname,
     [property: JsonPropertyName("port")] int Port,
     [property: JsonPropertyName("uptimeSeconds")] double UptimeSeconds,
-    [property: JsonPropertyName("defaultPrinter")] string DefaultPrinter
+    [property: JsonPropertyName("defaultPrinter")] string DefaultPrinter,
+    [property: JsonPropertyName("printerTelemetry")] PrinterTelemetry? PrinterTelemetry = null
+);
+
+public record PrinterTelemetry(
+    [property: JsonPropertyName("printerName")] string PrinterName,
+    [property: JsonPropertyName("isOnline")] bool IsOnline,
+    [property: JsonPropertyName("state")] string State,
+    [property: JsonPropertyName("stateDetails")] string StateDetails,
+    [property: JsonPropertyName("paperStatus")] string PaperStatus,
+    [property: JsonPropertyName("inkStatus")] string InkStatus,
+    [property: JsonPropertyName("coverStatus")] string CoverStatus,
+    [property: JsonPropertyName("queuedJobsCount")] int QueuedJobsCount,
+    [property: JsonPropertyName("lastCheckedUtc")] DateTime LastCheckedUtc
 );
 
 public record PairingRequest(

@@ -51,9 +51,11 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import com.smartremote.print.R
+import com.smartremote.print.BuildConfig
 import com.smartremote.print.network.PrintApiClient
 import com.smartremote.print.security.SecurityVault
 import com.smartremote.print.service.MargCsvSyncManager
+import com.smartremote.print.service.OfflinePrintQueueManager
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -373,10 +375,11 @@ class MainActivity : Activity() {
         val settings = webView.settings
 
         // 1. ALWAYS DESKTOP MODE ON (Edge-to-edge native full screen)
+        val isMobile = BuildConfig.DEVICE_TYPE == "mobile" || resources.configuration.smallestScreenWidthDp < 600
         settings.userAgentString = DESKTOP_USER_AGENT
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
-        settings.textZoom = 100
+        settings.textZoom = if (isMobile) 105 else 100
 
         // Multi-touch & Pinch zoom controls
         settings.builtInZoomControls = true
@@ -743,21 +746,33 @@ class MainActivity : Activity() {
      * AUTO-START & AUTO-CONNECT LOGIC:
      * Automatically attempts connection & pairing using PIN 260890 and server 100.111.100.122:8766.
      * Recovers seamlessly if PC reboots or WiFi toggles.
+     * Integrates Feature 5 (Offline Print Queue Auto-Resume) and Feature 6 (Live Printer Ink/Paper Telemetry).
      */
     private fun checkAndAutoConnect() {
         executor.execute {
             val health = apiClient.checkHealth()
             if (health != null) {
                 // Connected! Check if paired; if not, auto-pair with default PIN 260890
+                val deviceName = if (BuildConfig.DEVICE_TYPE == "mobile") "Android Phone (${Build.MODEL})" else "Lenovo Tab P12"
                 if (vault.getAuthToken() == null) {
                     val (paired, _) = apiClient.pairWithPin(
                         pin = vault.pairingPin,
                         deviceId = UUID.randomUUID().toString(),
-                        deviceName = "Lenovo Tab P12"
+                        deviceName = deviceName
                     )
                     isConnectedToAgent = paired
                 } else {
                     isConnectedToAgent = true
+                }
+
+                // Feature 5: Auto-flush offline print queue when reconnected!
+                if (isConnectedToAgent && OfflinePrintQueueManager.getPendingCount(applicationContext) > 0) {
+                    val flushed = OfflinePrintQueueManager.flushQueue(applicationContext, apiClient)
+                    if (flushed > 0) {
+                        mainHandler.post {
+                            Toast.makeText(this@MainActivity, "✓ Auto-printed $flushed offline queued bill(s) to Brother DCP-T530DW!", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
 
                 if (isConnectedToAgent && MargCsvSyncManager.hasPendingSync(applicationContext)) {
@@ -772,15 +787,59 @@ class MainActivity : Activity() {
                     }
                 }
 
+                // Feature 6: Live Printer Ink, Paper & Hardware Telemetry
+                val telem = health.printerTelemetry
+                val pendingPrints = OfflinePrintQueueManager.getPendingCount(applicationContext)
+                val queuePrefix = if (pendingPrints > 0) "[$pendingPrints Queued] " else ""
+
                 mainHandler.post {
-                    statusBeacon.text = "Office PC: ONLINE (Brother DCP-T530DW)"
-                    statusBeacon.setTextColor(0xFF10B981.toInt())
+                    if (telem != null) {
+                        when {
+                            telem.paperStatus == "OutOfPaper" -> {
+                                statusBeacon.text = "${queuePrefix}🔴 Brother DCP-T530DW: OUT OF PAPER! (Please load paper)"
+                                statusBeacon.setTextColor(0xFFEF4444.toInt())
+                            }
+                            telem.paperStatus == "PaperJam" -> {
+                                statusBeacon.text = "${queuePrefix}🔴 Brother DCP-T530DW: PAPER JAM! (Clear printer tray)"
+                                statusBeacon.setTextColor(0xFFEF4444.toInt())
+                            }
+                            telem.coverStatus == "DoorOpen" -> {
+                                statusBeacon.text = "${queuePrefix}🟡 Brother DCP-T530DW: COVER OPEN! (Please close door)"
+                                statusBeacon.setTextColor(0xFFF59E0B.toInt())
+                            }
+                            telem.inkStatus == "NoInk" -> {
+                                statusBeacon.text = "${queuePrefix}🔴 Brother DCP-T530DW: INK EMPTY! (Replace cartridge)"
+                                statusBeacon.setTextColor(0xFFEF4444.toInt())
+                            }
+                            telem.inkStatus == "LowInk" -> {
+                                statusBeacon.text = "${queuePrefix}🟡 Brother DCP-T530DW: LOW INK / TONER"
+                                statusBeacon.setTextColor(0xFFF59E0B.toInt())
+                            }
+                            telem.state == "Printing" -> {
+                                statusBeacon.text = "${queuePrefix}🔵 Office PC: Printing (${telem.queuedJobsCount} job(s) in spooler)"
+                                statusBeacon.setTextColor(0xFF38BDF8.toInt())
+                            }
+                            !telem.isOnline -> {
+                                statusBeacon.text = "${queuePrefix}🟡 Brother DCP-T530DW: Printer Offline"
+                                statusBeacon.setTextColor(0xFFF59E0B.toInt())
+                            }
+                            else -> {
+                                statusBeacon.text = "${queuePrefix}Office PC: ONLINE (Brother DCP-T530DW: Ready)"
+                                statusBeacon.setTextColor(0xFF10B981.toInt())
+                            }
+                        }
+                    } else {
+                        statusBeacon.text = "${queuePrefix}Office PC: ONLINE (Brother DCP-T530DW: Ready)"
+                        statusBeacon.setTextColor(0xFF10B981.toInt())
+                    }
                 }
             } else {
                 // PC might be rebooting or WiFi offline
                 isConnectedToAgent = false
+                val pendingPrints = OfflinePrintQueueManager.getPendingCount(applicationContext)
+                val queuePrefix = if (pendingPrints > 0) "[$pendingPrints Queued] " else ""
                 mainHandler.post {
-                    statusBeacon.text = "Office PC: OFFLINE (${vault.serverHost}:8766) - Auto-connecting..."
+                    statusBeacon.text = "${queuePrefix}Office PC: OFFLINE (${vault.serverHost}:8766) - Auto-connecting..."
                     statusBeacon.setTextColor(0xFFF59E0B.toInt())
                 }
             }
@@ -1210,7 +1269,9 @@ class MainActivity : Activity() {
                         if (result.state == "Completed" || result.state == "Queued" || result.state == "Spooling") {
                             Toast.makeText(this, "✓ Sent to Brother Printer spooler successfully!", Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(this, "Print failed: ${result.errorMessage}", Toast.LENGTH_LONG).show()
+                            // Feature 5: Zero dropped bills - save offline for auto-resume
+                            OfflinePrintQueueManager.enqueue(applicationContext, bytes, "Marg_Shared_Document.pdf")
+                            Toast.makeText(this, "📥 PC Offline: Bill saved to queue. Auto-printing to Brother on reconnect!", Toast.LENGTH_LONG).show()
                         }
                     }
                 } catch (e: Exception) {
