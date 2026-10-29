@@ -23,8 +23,14 @@ $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
 $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
-    Write-Warning "Please run PowerShell as Administrator to install the Windows Service."
-    Exit 1
+    Write-Host "Administrator privileges required. Requesting elevation..." -ForegroundColor Yellow
+    try {
+        Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+        Exit 0
+    } catch {
+        Write-Warning "Elevation canceled or failed. Please run PowerShell as Administrator."
+        Exit 1
+    }
 }
 
 # 2. Check Existing Environment and Verify Non-Interference
@@ -265,4 +271,12 @@ try {
     Write-Host " Marg Sync: Active at C:\SmartRemotePrint\MargSync" -ForegroundColor Cyan
     Write-Host " Check Task Manager or services.msc to confirm SmartRemotePrintAgent." -ForegroundColor White
     Write-Host "===================================================================" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "Setup complete! Press Enter to exit..." -ForegroundColor Yellow
+try {
+    [void][System.Console]::ReadLine()
+} catch {
+    Start-Sleep -Seconds 3
 }

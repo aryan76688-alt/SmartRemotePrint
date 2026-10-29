@@ -10,24 +10,41 @@
 
 ## Installation Steps
 
-### Option 1: Automated Installation via PowerShell (Recommended)
-1. Copy the `windows-installer/` folder to your office PC.
-2. Open PowerShell as **Administrator**.
-3. Run the installer:
-   ```powershell
-   cd "path\to\windows-installer"
-   .\install.ps1
+### Option 1: 1-Click Batch Installer (Recommended for Command Prompt & Explorer)
+1. Copy or extract `windows-installer/` to your PC (e.g. `C:\SmartRemotePrint\windows-installer`).
+2. Simply double-click **`install.bat`** (or run `install.bat` in Command Prompt):
+   ```cmd
+   cd "C:\SmartRemotePrint\windows-installer"
+   install.bat
    ```
-4. The script will:
-   - Create `C:\Program Files\SmartRemotePrint\`
-   - Copy `SmartRemotePrintAgent.exe`
-   - Open Windows Firewall for TCP port 8766
-   - Register a Windows Scheduled Task to auto-start at logon
-   - Launch the agent immediately in the background
+3. If prompted by Windows UAC, click **"Yes"** to grant Administrator privileges.
+4. The installer will automatically:
+   - Configure port 8766 in Windows Firewall
+   - Install `SmartRemotePrintAgent.exe` as an auto-starting 24/7 background Windows NT Service
+   - Install `SmartRemotePrintDesktop.exe` ("Smart Remote Print (Print Anything)" desktop shortcut)
+   - Auto-detect the Brother DCP-T530DW or default printer
+   - Set up Marg ERP Auto-Sync at `C:\SmartRemotePrint\MargSync`
 
 ---
 
-### Option 2: Manual Standalone Execution
+### Option 2: Run via PowerShell
+If running directly in PowerShell:
+```powershell
+cd "C:\SmartRemotePrint\windows-installer"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\install.ps1
+```
+
+> **Note for Command Prompt (`cmd.exe`) users**:
+> If you see `'Set-ExecutionPolicy' is not recognized as an internal or external command`, you are in standard Command Prompt instead of PowerShell. In Command Prompt, run:
+> ```cmd
+> powershell -ExecutionPolicy Bypass -File .\install.ps1
+> ```
+> Or simply run `install.bat`.
+
+---
+
+### Option 3: Manual Standalone Execution
 If you prefer running without installation:
 1. Double click `SmartRemotePrintAgent.exe`.
 2. A console window will appear displaying:
@@ -55,7 +72,9 @@ You should see:
 
 ## Uninstallation
 To cleanly remove the agent:
-```powershell
-cd "path\to\windows-installer"
-.\uninstall.ps1
-```
+- Double-click **`uninstall.bat`** (or run `uninstall.bat` in Command Prompt), OR
+- In PowerShell:
+  ```powershell
+  cd "path\to\windows-installer"
+  .\uninstall.ps1
+  ```
